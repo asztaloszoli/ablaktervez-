@@ -1,0 +1,1630 @@
+<!DOCTYPE html>
+<html lang="hu">
+  <head>
+    <script src="index.min.js"></script>
+    <meta charset="UTF-8">
+    <title>Ablak és Ajtó Méret Generátor</title>
+    <style>
+      /* Previous styles remain unchanged */
+      body {
+        font-family: Arial, sans-serif;
+        margin: 10px;
+        background-color: #2c2c2c;
+        color: #e0e0e0;
+      }
+  
+      h1, h2, h3 {
+        margin-top: 20px;
+        text-align: center;
+        color: #ffa500;
+      }
+  
+      .tab {
+        display: none;
+      }
+  
+      .tab.active {
+        display: block;
+      }
+  
+      .tabs {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+  
+      .tabs button {
+        margin-right: 5px;
+        padding: 10px 20px;
+        cursor: pointer;
+        background-color: #4CAF50;
+        border: none;
+        border-radius: 4px;
+        color: white;
+        font-weight: bold;
+      }
+  
+      .tabs button:hover {
+        background-color: #45a049;
+      }
+  
+      .form-group {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        background-color: #444;
+        padding: 20px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+      }
+  
+      .form-item {
+        flex: 1 1 calc(50% - 20px);
+        margin: 10px;
+      }
+  
+      .form-item label {
+        display: block;
+        text-align: center;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #e0e0e0;
+      }
+  
+      .form-item input[type="number"], .form-item select, .manual-settings input[type="number"] {
+        width: 100%;
+        max-width: 150px;
+        padding: 10px;
+        border: 1px solid #777;
+        border-radius: 4px;
+        background-color: #555;
+        color: #fff;
+      }
+  
+      .form-button {
+        text-align: center;
+        margin-top: 20px;
+      }
+  
+      button {
+        padding: 10px 20px;
+        margin: 10px;
+        cursor: pointer;
+        background-color: #2196F3;
+        border: none;
+        border-radius: 4px;
+        color: white;
+        font-weight: bold;
+      }
+  
+      button:hover {
+        background-color: #1976D2;
+      }
+  
+      .component-list {
+        margin-top: 20px;
+        background-color: #444;
+        padding: 20px;
+        border-radius: 4px;
+      }
+  
+      .component-list p {
+        margin: 5px 0;
+      }
+  
+      .component-list button {
+        margin-left: 10px;
+        background-color: #FF5722;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 4px;
+        color: white;
+        cursor: pointer;
+      }
+  
+      .component-list button:hover {
+        background-color: #E64A19;
+      }
+  
+      .section {
+        background-color: #555;
+        color: #ffa500;
+        padding: 10px;
+        border-radius: 4px;
+        text-align: center;
+        margin-bottom: 20px;
+        width: 100%;
+      }
+  
+      #doorPreviewCanvas, #interiorDoorPreviewCanvas, #electricBoxDoorPreviewCanvas {
+        border: 1px solid #333;
+        margin-top: 20px;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        width: 600px;
+        height: 1000px;
+      }
+  
+      .manual-settings {
+        margin-top: 10px;
+        padding: 15px;
+        border: 1px solid #777;
+        border-radius: 4px;
+        background-color: #333;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Ablak és Ajtó Generátor</h1>
+  
+    <div class="tabs">
+      <button onclick="showTab('windowTab')">Ablakok</button>
+      <button onclick="showTab('doorTab')">Ajtók</button>
+      <button onclick="showTab('interiorDoorTab')">Beltéri ajtók</button>
+      <button onclick="showTab('electricBoxDoorTab')">Villanyóra szekrény ajtó</button>
+    </div>
+  
+    <!-- Ablakok fül -->
+    <div id="windowTab" class="tab active">
+      <h2>Ablak Paraméterek</h2>
+  
+      <h3 class="section">Tok Külméretek</h3>
+      <div class="form-group">
+        <div class="form-item">
+          <label for="frame_width">Tok szélesség (mm):</label>
+          <input type="number" id="frame_width" step="0.1" min="0">
+        </div>
+        <div class="form-item">
+          <label for="frame_height">Tok magasság (mm):</label>
+          <input type="number" id="frame_height" step="0.1" min="0">
+        </div>
+      </div>
+  
+      <h3 class="section">Faanyag Keresztmetszetek</h3>
+      <div class="form-group">
+        <div class="form-item">
+          <label for="frame_wood_width">Tok anyag szélesség (mm):</label>
+          <input type="number" id="frame_wood_width" step="0.1" min="0">
+        </div>
+        <div class="form-item">
+          <label for="frame_wood_thickness">Tok anyag vastagság (mm):</label>
+          <input type="number" id="frame_wood_thickness" step="0.1" min="0">
+        </div>
+        <div class="form-item">
+          <label for="sash_wood_width">Nyíló anyag szélesség (mm):</label>
+          <input type="number" id="sash_wood_width" step="0.1" min="0">
+        </div>
+        <div class="form-item">
+          <label for="sash_wood_thickness">Nyíló anyag vastagság (mm):</label>
+          <input type="number" id="sash_wood_thickness" step="0.1" min="0">
+        </div>
+      </div>
+  
+      <h3 class="section">Ablak Típus Választása</h3>
+      <div class="form-group">
+        <div class="form-item">
+          <label for="window_type">Ablak típus:</label>
+          <select id="window_type">
+            <option value="Egyszárnyú">Egyszárnyú</option>
+            <option value="Kétszárnyú">Kétszárnyú</option>
+            <option value="Tokosztós">Tokosztós</option>
+            <option value="Üvegfal">Üvegfal</option>
+          </select>
+        </div>
+      </div>
+  
+      <h3 class="section">Nyíló Méret Számítás</h3>
+      <div class="form-group">
+        <div class="form-item">
+          <label for="sash_width_deduction">Nyíló szélesség levonás (mm):</label>
+          <input type="number" id="sash_width_deduction" step="0.1" min="0">
+        </div>
+        <div class="form-item">
+          <label for="sash_height_deduction">Nyíló magasság levonás (mm):</label>
+          <input type="number" id="sash_height_deduction" step="0.1" min="0">
+        </div>
+        <div class="form-item">
+          <label for="sash_double_deduction">Kétszárnyú/tokosztós levonás (mm):</label>
+          <input type="number" id="sash_double_deduction" step="0.1" min="0">
+        </div>
+        <div class="form-item">
+          <label for="window_count">Darabszám:</label>
+          <input type="number" id="window_count" min="1" value="1">
+        </div>
+      </div>
+  
+      <div class="form-button">
+        <button onclick="submitWindowParams()">Ablak Generálása</button>
+      </div>
+    </div>
+  
+    <!-- Ajtók fül -->
+    <div id="doorTab" class="tab">
+      <h2>Ajtó Paraméterek</h2>
+      <h3 class="section">Tok Külméretek</h3>
+      <div class="form-group">
+        <div class="form-item">
+          <label for="door_frame_width">Tok szélesség (mm):</label>
+          <input type="number" id="door_frame_width" step="0.1" min="0">
+        </div>
+        <div class="form-item">
+          <label for="door_frame_height">Tok magasság (mm):</label>
+          <input type="number" id="door_frame_height" step="0.1" min="0">
+        </div>
+      </div>
+      <h3 class="section">Ajtó Típus Választása</h3>
+      <div class="form-group">
+          <div class="form-item">
+              <label for="door_type">Ajtó típus:</label>
+              <select id="door_type" onchange="handleDoorTypeChange()">
+                  <option value="Egyszárnyú">Egyszárnyú</option>
+                  <option value="Kétszárnyú">Kétszárnyú</option>
+              </select>
+          </div>
+      </div>
+      
+      <div id="asymmetricOptions" class="form-group" style="display: none;">
+          <div class="form-item">
+              <input type="checkbox" id="isAsymmetric" onchange="handleAsymmetricChange()">
+              <label for="isAsymmetric">Aszimmetrikus felosztás</label>
+              
+              <div id="asymmetricInputs" style="display: none;">
+                  <div class="form-item">
+                      <label for="mainWingRatio">Szélesebb szárny aránya (%):</label>
+                      <input type="number" id="mainWingRatio" value="60" min="50" max="70">
+                  </div>
+                  <div class="form-item">
+                    Keskenyebb szárnyba ne kerüljön függőleges osztó:
+                    <input type="checkbox" id="disableNarrowWingVerticalDivisions" />
+                  </div>
+                </div>
+              </div>
+            </div>
+      
+      <div class="form-group">
+          <div class="form-item">
+              <input type="checkbox" id="useAluminumThreshold" name="useAluminumThreshold">
+              <label for="useAluminumThreshold">Alumínium küszöb használata</label>
+          </div>
+      </div>
+    
+      
+      <h3 class="section">Faanyag Keresztmetszetek</h3>
+      <div class="form-group">
+        <div class="form-item">
+          <label for="door_frame_wood_width">Tok anyag szélesség (mm):</label>
+          <input type="number" id="door_frame_wood_width" step="0.1" min="0">
+        </div>
+        <div class="form-item">
+          <label for="door_frame_wood_thickness">Tok anyag vastagság (mm):</label>
+          <input type="number" id="door_frame_wood_thickness" step="0.1" min="0">
+        </div>
+        <div class="form-item">
+          <label for="door_sash_width_deduction">Nyíló szélesség levonás (mm):</label>
+          <input type="number" id="door_sash_width_deduction" step="0.1" min="0">
+        </div>
+        <div class="form-item">
+          <label for="door_sash_height_deduction">Nyíló magasság levonás (mm):</label>
+          <input type="number" id="door_sash_height_deduction" step="0.1" min="0">
+        </div>
+        <div class="form-item">
+          <label for="door_count">Darabszám:</label>
+          <input type="number" id="door_count" min="1" value="1">
+        </div>
+      </div>
+  
+      <h3 class="section">Csap Hossza</h3>
+      <div class="form-group">
+        <div class="form-item">
+          <label for="door_tenon_length">Csap hossza (mm):</label>
+          <input type="number" id="door_tenon_length" step="0.1" min="0">
+        </div>
+      </div>
+  
+      <h3 class="section">Ajtó Fríz</h3>
+      <div class="form-group">
+        <div class="form-item">
+          <label for="door_frieze_width">Ajtó fríz szélessége (mm):</label>
+          <input type="number" id="door_frieze_width" step="0.1" min="0">
+        </div>
+        <div class="form-item">
+          <label for="door_frieze_thickness">Ajtó fríz vastagsága (mm):</label>
+          <input type="number" id="door_frieze_thickness" step="0.1" min="0">
+        </div>
+      </div>
+  
+      <h3 class="section">Alsó Csapos</h3>
+      <div class="form-group">
+        <div class="form-item">
+          <label for="door_lower_tenoned_width">Alsó csapos szélessége (mm):</label>
+          <input type="number" id="door_lower_tenoned_width" step="0.1" min="0">
+        </div>
+        <div class="form-item">
+          <label for="door_lower_tenoned_thickness">Alsó csapos vastagsága (mm):</label>
+          <input type="number" id="door_lower_tenoned_thickness" step="0.1" min="0">
+        </div>
+      </div>
+  
+      <h3 class="section">Középső Vízszintes Osztók</h3>
+      <div class="form-group">
+        <div class="form-item">
+          <label for="door_middle_division_width">Középső osztók szélessége (mm):</label>
+          <input type="number" id="door_middle_division_width" step="0.1" min="0">
+        </div>
+        <div class="form-item">
+          <label for="door_middle_division_thickness">Középső osztók vastagsága (mm):</label>
+          <input type="number" id="door_middle_division_thickness" step="0.1" min="0">
+        </div>
+        <div class="form-item">
+          <label for="door_horizontal_divisions">Vízszintes osztások száma:</label>
+          <input type="number" id="door_horizontal_divisions" min="0" value="0">
+        </div>
+      </div>
+  
+      <h3 class="section">Felső Csapos</h3>
+      <div class="form-group">
+        <div class="form-item">
+          <label for="door_upper_tenoned_width">Felső csapos szélessége (mm):</label>
+          <input type="number" id="door_upper_tenoned_width" step="0.1" min="0">
+        </div>
+        <div class="form-item">
+          <label for="door_upper_tenoned_thickness">Felső csapos vastagsága (mm):</label>
+          <input type="number" id="door_upper_tenoned_thickness" step="0.1" min="0">
+        </div>
+      </div>
+  
+      <h3 class="section">Függőleges Osztók</h3>
+      <div class="form-group">
+        <div class="form-item">
+          <label for="door_vertical_division_width">Függőleges osztók szélessége (mm):</label>
+          <input type="number" id="door_vertical_division_width" step="0.1" min="0">
+        </div>
+        <div class="form-item">
+          <label for="door_vertical_division_thickness">Függőleges osztók vastagsága (mm):</label>
+          <input type="number" id="door_vertical_division_thickness" step="0.1" min="0">
+        </div>
+        <div class="form-item">
+          <label for="door_vertical_divisions">Függőleges osztások száma:</label>
+          <input type="number" id="door_vertical_divisions" min="0" value="0">
+        </div>
+      </div>
+  
+      <div class="form-group">
+        <div class="form-item">
+          <label for="door-manual-settings-checkbox">Manuális beállítások:</label>
+          <input type="checkbox" id="door-manual-settings-checkbox">
+        </div>
+      </div>
+  
+      <div id="door-manual-settings" class="manual-settings" style="display: none;">
+        <div id="door-horizontal-positions"></div>
+        <div id="door-vertical-positions"></div>
+      </div>
+
+      <div class="form-button">
+        <button onclick="submitDoorParams()">Ajtó Generálása</button>
+      </div>
+  
+      <!-- Ajtó előnézet canvas -->
+      <h3>Ajtó Előnézet</h3>
+      <canvas id="doorPreviewCanvas" width="600" height="1000"></canvas>
+    </div>
+  
+  <!-- Beltéri ajtók fül -->
+  <div id="interiorDoorTab" class="tab">
+    <h2>Beltéri Ajtó Paraméterek</h2>
+    <h3 class="section">Tok Külméretek</h3>
+      <div class="form-group">
+        <div class="form-item">
+          <label for="interior_door_frame_width">Tok szélesség (mm):</label>
+          <input type="number" id="interior_door_frame_width" step="0.1" min="0">
+        </div>
+        <div class="form-item">
+          <label for="interior_door_frame_height">Tok magasság (mm):</label>
+          <input type="number" id="interior_door_frame_height" step="0.1" min="0">
+        </div>
+      </div>
+
+    <h3 class="section">Faanyag Keresztmetszetek</h3> 
+    <div class="form-group">
+      <div class="form-item">
+        <label for="interior_door_frame_wood_width">Tok anyag szélesség (mm):</label>
+        <input type="number" id="interior_door_frame_wood_width" step="0.1" min="0">
+      </div>
+      <div class="form-item">
+        <label for="interior_door_frame_wood_thickness">Tok anyag vastagság (mm):</label>
+        <input type="number" id="interior_door_frame_wood_thickness" step="0.1" min="0">
+      </div>
+      <div class="form-item">
+        <label for="interior_door_sash_width_deduction">Nyíló szélesség levonás (mm):</label>
+        <input type="number" id="interior_door_sash_width_deduction" step="0.1" min="0">
+      </div>
+      <div class="form-item">
+        <label for="interior_door_sash_height_deduction">Nyíló magasság levonás (mm):</label>
+        <input type="number" id="interior_door_sash_height_deduction" step="0.1" min="0">
+      </div>
+      <div class="form-item">
+        <label for="interior_door_count">Darabszám:</label>
+        <input type="number" id="interior_door_count" min="1" value="1">
+      </div>
+    </div>
+  
+    <h3 class="section">Csap Hossza</h3>
+    <div class="form-group">
+      <div class="form-item">
+        <label for="interior_tenon_length">Csap hossza (mm):</label>
+        <input type="number" id="interior_tenon_length" step="0.1" min="0">
+      </div>
+    </div>
+  
+    <h3 class="section">Ajtó Fríz</h3>
+    <div class="form-group">
+      <div class="form-item">
+        <label for="interior_door_frieze_width">Ajtó fríz szélessége (mm):</label>
+        <input type="number" id="interior_door_frieze_width" step="0.1" min="0">
+      </div>
+      <div class="form-item">
+        <label for="interior_door_frieze_thickness">Ajtó fríz vastagsága (mm):</label>
+        <input type="number" id="interior_door_frieze_thickness" step="0.1" min="0">
+      </div>
+    </div>
+  
+    <h3 class="section">Alsó Csapos</h3>
+    <div class="form-group">
+      <div class="form-item">
+        <label for="interior_lower_tenoned_width">Alsó csapos szélessége (mm):</label>
+        <input type="number" id="interior_lower_tenoned_width" step="0.1" min="0">
+      </div>
+      <div class="form-item">
+        <label for="interior_lower_tenoned_thickness">Alsó csapos vastagsága (mm):</label>
+        <input type="number" id="interior_lower_tenoned_thickness" step="0.1" min="0">
+      </div>
+    </div>
+  
+    <h3 class="section">Középső Vízszintes Osztók</h3>
+    <div class="form-group">
+      <div class="form-item">
+        <label for="interior_middle_division_width">Középső osztók szélessége (mm):</label>
+        <input type="number" id="interior_middle_division_width" step="0.1" min="0">
+      </div>
+      <div class="form-item">
+        <label for="interior_middle_division_thickness">Középső osztók vastagsága (mm):</label>
+        <input type="number" id="interior_middle_division_thickness" step="0.1" min="0">
+      </div>
+      <div class="form-item">
+        <label for="interior_horizontal_divisions">Vízszintes osztások száma:</label>
+        <input type="number" id="interior_horizontal_divisions" min="0" value="0">
+      </div>
+    </div>
+  
+    <h3 class="section">Felső Csapos</h3>
+    <div class="form-group">
+      <div class="form-item">
+        <label for="interior_upper_tenoned_width">Felső csapos szélessége (mm):</label>
+        <input type="number" id="interior_upper_tenoned_width" step="0.1" min="0">
+      </div>
+      <div class="form-item">
+        <label for="interior_upper_tenoned_thickness">Felső csapos vastagsága (mm):</label>
+        <input type="number" id="interior_upper_tenoned_thickness" step="0.1" min="0">
+      </div>
+    </div>
+  
+    <h3 class="section">Függőleges Osztók</h3>
+    <div class="form-group">
+      <div class="form-item">
+        <label for="interior_vertical_division_width">Függőleges osztók szélessége (mm):</label>
+        <input type="number" id="interior_vertical_division_width" step="0.1" min="0">
+      </div>
+      <div class="form-item">
+        <label for="interior_vertical_division_thickness">Függőleges osztók vastagsága (mm):</label>
+        <input type="number" id="interior_vertical_division_thickness" step="0.1" min="0">
+      </div>
+      <div class="form-item">
+        <label for="interior_vertical_divisions">Függőleges osztások száma:</label>
+        <input type="number" id="interior_vertical_divisions" min="0" value="0">
+      </div>
+    </div>
+  
+    <div class="form-button">
+      <button onclick="submitInteriorDoorParams()">Beltéri Ajtó Generálása</button>
+    </div>
+  
+    <!-- Beltéri ajtó előnézet canvas -->
+    <h3>Beltéri Ajtó Előnézet</h3>
+    <canvas id="interiorDoorPreviewCanvas" width="600" height="1000"></canvas>
+  </div>
+  <!-- Villanyóra szekrény ajtó fül -->
+  <div id="electricBoxDoorTab" class="tab">
+    <h2>Villanyóra Szekrény Ajtó Paraméterek</h2>
+    <h3 class="section">Tok Külméretek</h3>
+      <div class="form-group">
+        <div class="form-item">
+          <label for="electric_box_door_frame_width">Tok szélesség (mm):</label>
+          <input type="number" id="electric_box_door_frame_width" step="0.1" min="0">
+        </div>
+        <div class="form-item">
+          <label for="electric_box_door_frame_height">Tok magasság (mm):</label>
+          <input type="number" id="electric_box_door_frame_height" step="0.1" min="0">
+        </div>
+      </div>
+    <h3 class="section">Faanyag Keresztmetszetek</h3>
+    <div class="form-group">
+      <div class="form-item">
+        <label for="electric_box_door_frame_wood_width">Tok anyag szélesség (mm):</label>
+        <input type="number" id="electric_box_door_frame_wood_width" step="0.1" min="0">
+      </div>
+      <div class="form-item">
+        <label for="electric_box_door_frame_wood_thickness">Tok anyag vastagság (mm):</label>
+        <input type="number" id="electric_box_door_frame_wood_thickness" step="0.1" min="0">
+      </div>
+      <div class="form-item">
+        <label for="electric_box_door_sash_width_deduction">Nyíló szélesség levonás (mm):</label>
+        <input type="number" id="electric_box_door_sash_width_deduction" step="0.1" min="0">
+      </div>
+      <div class="form-item">
+        <label for="electric_box_door_sash_height_deduction">Nyíló magasság levonás (mm):</label>
+        <input type="number" id="electric_box_door_sash_height_deduction" step="0.1" min="0">
+      </div>
+      <div class="form-item">
+        <label for="electric_box_door_count">Darabszám:</label>
+        <input type="number" id="electric_box_door_count" min="1" value="1">
+      </div>
+    </div>
+  
+    <h3 class="section">Csap Hossza</h3>
+    <div class="form-group">
+      <div class="form-item">
+        <label for="electric_box_tenon_length">Csap hossza (mm):</label>
+        <input type="number" id="electric_box_tenon_length" step="0.1" min="0">
+      </div>
+    </div>
+  
+    <h3 class="section">Ajtó Fríz</h3>
+    <div class="form-group">
+      <div class="form-item">
+        <label for="electric_box_door_frieze_width">Ajtó fríz szélessége (mm):</label>
+        <input type="number" id="electric_box_door_frieze_width" step="0.1" min="0">
+      </div>
+      <div class="form-item">
+        <label for="electric_box_door_frieze_thickness">Ajtó fríz vastagsága (mm):</label>
+        <input type="number" id="electric_box_door_frieze_thickness" step="0.1" min="0">
+      </div>
+    </div>
+  
+    <h3 class="section">Alsó Csapos</h3>
+    <div class="form-group">
+      <div class="form-item">
+        <label for="electric_box_lower_tenoned_width">Alsó csapos szélessége (mm):</label>
+        <input type="number" id="electric_box_lower_tenoned_width" step="0.1" min="0">
+      </div>
+      <div class="form-item">
+        <label for="electric_box_lower_tenoned_thickness">Alsó csapos vastagsága (mm):</label>
+        <input type="number" id="electric_box_lower_tenoned_thickness" step="0.1" min="0">
+      </div>
+    </div>
+  
+    <h3 class="section">Középső Vízszintes Osztók</h3>
+    <div class="form-group">
+      <div class="form-item">
+        <label for="electric_box_middle_division_width">Középső osztók szélessége (mm):</label>
+        <input type="number" id="electric_box_middle_division_width" step="0.1" min="0">
+      </div>
+      <div class="form-item">
+        <label for="electric_box_middle_division_thickness">Középső osztók vastagsága (mm):</label>
+        <input type="number" id="electric_box_middle_division_thickness" step="0.1" min="0">
+      </div>
+      <div class="form-item">
+        <label for="electric_box_horizontal_divisions">Vízszintes osztások száma:</label>
+        <input type="number" id="electric_box_horizontal_divisions" min="0" value="0">
+      </div>
+    </div>
+  
+    <h3 class="section">Felső Csapos</h3>
+    <div class="form-group">
+      <div class="form-item">
+        <label for="electric_box_upper_tenoned_width">Felső csapos szélessége (mm):</label>
+        <input type="number" id="electric_box_upper_tenoned_width" step="0.1" min="0">
+      </div>
+      <div class="form-item">
+        <label for="electric_box_upper_tenoned_thickness">Felső csapos vastagsága (mm):</label>
+        <input type="number" id="electric_box_upper_tenoned_thickness" step="0.1" min="0">
+      </div>
+    </div>
+  
+    <h3 class="section">Függőleges Osztók</h3>
+    <div class="form-group">
+      <div class="form-item">
+        <label for="electric_box_vertical_division_width">Függőleges osztók szélessége (mm):</label>
+        <input type="number" id="electric_box_vertical_division_width" step="0.1" min="0">
+      </div>
+      <div class="form-item">
+        <label for="electric_box_vertical_division_thickness">Függőleges osztók vastagsága (mm):</label>
+        <input type="number" id="electric_box_vertical_division_thickness" step="0.1" min="0">
+      </div>
+      <div class="form-item">
+        <label for="electric_box_vertical_divisions">Függőleges osztások száma:</label>
+        <input type="number" id="electric_box_vertical_divisions" min="0" value="0">
+      </div>
+    </div>
+  
+    <div class="form-button">
+      <button onclick="submitElectricBoxDoorParams()">Villanyóra Szekrény Ajtó Generálása</button>
+    </div>
+  
+    <!-- Villanyóra szekrény ajtó előnézet canvas -->
+    <h3>Villanyóra Szekrény Ajtó Előnézet</h3>
+    <canvas id="electricBoxDoorPreviewCanvas" width="600" height="1000"></canvas>
+  </div>
+  
+    <!-- Generált elemlista -->
+    <div class="component-list" id="componentList">
+      <h2>Generált Elemlista</h2>
+      <div id="componentListContent"></div>
+    </div>
+  
+    <!-- Alkatrészek létrehozása gomb -->
+    <div class="form-button">
+      <button onclick="generateComponents()">Alkatrészek Létrehozása</button>
+    </div>
+
+  <script>
+    // 1. Canvas változók deklarálása
+    var canvas = new fabric.Canvas('doorPreviewCanvas');
+    var interiorCanvas = new fabric.Canvas('interiorDoorPreviewCanvas');
+    var electricBoxCanvas = new fabric.Canvas('electricBoxDoorPreviewCanvas');
+
+    // 2. showTab függvény
+    function showTab(tabId) {
+        document.querySelectorAll('.tab').forEach(function(tab) {
+            tab.classList.remove('active');
+            tab.style.display = 'none';
+        });
+        var selectedTab = document.getElementById(tabId);
+        if (selectedTab) {
+            selectedTab.classList.add('active');
+            selectedTab.style.display = 'block';
+        }
+    }
+
+    // 3. window.onload eseménykezelő
+    window.onload = function() {
+        showTab('windowTab');
+        loadFormValues();
+        
+        document.querySelectorAll('#interiorDoorTab input[type="number"]').forEach(function(input) {
+            input.addEventListener('input', function() {
+                var params = collectInteriorDoorParams();
+                if (params) {
+                    drawInteriorDoor(params);
+                }
+            });
+        });
+
+        document.querySelectorAll('#electricBoxDoorTab input[type="number"]').forEach(function(input) {
+            input.addEventListener('input', function() {
+                var params = collectElectricBoxDoorParams();
+                if (params) {
+                    drawElectricBoxDoor(params);
+                }
+            });
+        });
+    };
+    document.addEventListener('DOMContentLoaded', function() {
+    // Meglévő elemek kiválasztása
+    const doorTypeSelect = document.getElementById('door_type');
+    const asymmetricOptions = document.getElementById('asymmetricOptions');
+    const asymmetricCheckbox = document.getElementById('isAsymmetric');
+    const asymmetricInputs = document.getElementById('asymmetricInputs');
+    const mainWingRatio = document.getElementById('mainWingRatio');
+    const disableNarrowWingVerticalDivisions = document.getElementById('disableNarrowWingVerticalDivisions');
+
+    // Ajtó típus változás eseménykezelő
+    doorTypeSelect?.addEventListener('change', function() {
+        const isDouble = this.value === 'Kétszárnyú';
+        asymmetricOptions.style.display = isDouble ? 'block' : 'none';
+        if (!isDouble) {
+            asymmetricCheckbox.checked = false;
+            asymmetricInputs.style.display = 'none';
+        }
+        
+        // Callback az ajtó típus változásra
+        if (window.sketchup) {
+            window.sketchup.doorTypeChanged(JSON.stringify({
+                doorType: this.value,
+                isAsymmetric: asymmetricCheckbox.checked,
+                mainWingRatio: mainWingRatio.value,
+                disableNarrowWingVerticalDivisions: disableNarrowWingVerticalDivisions.checked
+            }));
+        }
+    });
+
+    // Aszimmetrikus beállítás változás eseménykezelő
+    asymmetricCheckbox?.addEventListener('change', function() {
+        asymmetricInputs.style.display = this.checked ? 'block' : 'none';
+        if (window.sketchup) {
+            window.sketchup.updateAsymmetricSettings(JSON.stringify({
+                isAsymmetric: this.checked,
+                mainWingRatio: mainWingRatio.value,
+                disableNarrowWingVerticalDivisions: disableNarrowWingVerticalDivisions.checked
+            }));
+        }
+    });
+
+    // Függőleges osztó kapcsoló eseménykezelő
+    disableNarrowWingVerticalDivisions?.addEventListener('change', function() {
+        if (window.sketchup) {
+            window.sketchup.updateAsymmetricSettings(JSON.stringify({
+                isAsymmetric: asymmetricCheckbox.checked,
+                mainWingRatio: mainWingRatio.value,
+                disableNarrowWingVerticalDivisions: this.checked
+            }));
+        }
+    });
+
+    // Itt folytatódnak a meglévő eseménykezelők...
+});
+
+    // Add event listener for aluminum threshold checkbox
+    const aluminumThresholdCheckbox = document.getElementById('useAluminumThreshold');
+    if (aluminumThresholdCheckbox) {
+        aluminumThresholdCheckbox.addEventListener('change', function() {
+            console.log('Aluminum threshold setting changed:', this.checked);
+            // Ha szükséges, itt frissíthetjük az előnézetet vagy más elemeket
+            var params = collectDoorParams();
+            if (params) {
+                drawDoor(params);
+            }
+        });
+    }
+
+    // 4. Ablak függvények
+    function submitWindowParams() {
+        var params = collectWindowParams();
+        if (params) {
+            saveFormValues();
+            sketchup.generateComponents(JSON.stringify(params));
+        }
+    }
+
+    function collectWindowParams() {
+        var frameWoodWidth = document.getElementById('frame_wood_width').value;
+        var frameWoodThickness = document.getElementById('frame_wood_thickness').value;
+        var sashWoodWidth = document.getElementById('sash_wood_width').value;
+        var sashWoodThickness = document.getElementById('sash_wood_thickness').value;
+        var windowType = document.getElementById('window_type').value;
+        var frameWidth = document.getElementById('frame_width').value;
+        var frameHeight = document.getElementById('frame_height').value;
+        var sashWidthDeduction = document.getElementById('sash_width_deduction').value;
+        var sashHeightDeduction = document.getElementById('sash_height_deduction').value;
+        var sashDoubleDeduction = document.getElementById('sash_double_deduction').value;
+        var windowCount = document.getElementById('window_count').value;
+
+        if (!frameWoodWidth || !frameWoodThickness || !sashWoodWidth || !sashWoodThickness || !frameWidth || !frameHeight || !windowCount) {
+            alert('Kérjük, töltse ki az összes kötelező mezőt.');
+            return null;
+        }
+
+        return {
+            element_type: "Ablak",
+            frame_wood_width: frameWoodWidth,
+            frame_wood_thickness: frameWoodThickness,
+            sash_wood_width: sashWoodWidth,
+            sash_wood_thickness: sashWoodThickness,
+            window_type: windowType,
+            frame_width: frameWidth,
+            frame_height: frameHeight,
+            sash_width_deduction: sashWidthDeduction,
+            sash_height_deduction: sashHeightDeduction,
+            sash_double_deduction: sashDoubleDeduction,
+            window_count: windowCount
+        };
+    }
+
+    // 5. Ajtó függvények
+    function submitDoorParams() {
+      canvas.clear(); // Előző rajz törlése
+    var params = collectDoorParams();
+    if (params) {
+        saveFormValues();
+        console.log("Ajtó paraméterek küldése:", params);
+        sketchup.generateComponents(JSON.stringify(params));  // Ez a kulcsfontosságú sor
+        drawDoor(params);
+    }
+}
+    
+   
+function collectDoorParams() {
+    // Értékek beolvasása az input mezőkből
+    var doorframeWoodWidth = document.getElementById('door_frame_wood_width').value;
+    var doorframeWoodThickness = document.getElementById('door_frame_wood_thickness').value;
+    var doorframeWidth = document.getElementById('door_frame_width').value;
+    var doorframeHeight = document.getElementById('door_frame_height').value;
+    var doorSashWidthDeduction = document.getElementById('door_sash_width_deduction').value;
+    var doorSashHeightDeduction = document.getElementById('door_sash_height_deduction').value;
+    var doorType = document.getElementById('door_type').value;  // Itt javítottuk az ID-t
+    var doorCount = document.getElementById('door_count').value;
+    var tenonLength = document.getElementById('door_tenon_length').value;
+    var doorFriezeWidth = document.getElementById('door_frieze_width').value;
+    var doorFriezeThickness = document.getElementById('door_frieze_thickness').value;
+    var lowerTenonedWidth = document.getElementById('door_lower_tenoned_width').value;
+    var lowerTenonedThickness = document.getElementById('door_lower_tenoned_thickness').value;
+    var middleDivisionWidth = document.getElementById('door_middle_division_width').value;
+    var middleDivisionThickness = document.getElementById('door_middle_division_thickness').value;
+    var horizontalDivisions = document.getElementById('door_horizontal_divisions').value;
+    var upperTenonedWidth = document.getElementById('door_upper_tenoned_width').value;
+    var upperTenonedThickness = document.getElementById('door_upper_tenoned_thickness').value;
+    var verticalDivisionWidth = document.getElementById('door_vertical_division_width').value;
+    var verticalDivisionThickness = document.getElementById('door_vertical_division_thickness').value;
+    var verticalDivisions = document.getElementById('door_vertical_divisions').value;
+    var isAsymmetric = document.getElementById('isAsymmetric').checked;
+    var mainWingRatio = isAsymmetric && doorType === 'Kétszárnyú' ? 
+        parseInt(document.getElementById('mainWingRatio').value) : 50;
+
+         // Debug log a checkbox értékének ellenőrzéséhez
+        console.log("Checkbox állapota:", document.getElementById('useAluminumThreshold').checked);
+        
+    var useAluminumThreshold = document.getElementById("useAluminumThreshold").checked;
+    var disableNarrowWingVerticalDivisions = document.getElementById('disableNarrowWingVerticalDivisions');
+
+    
+
+    // Aszimmetrikus opciók beolvasása
+    var isAsymmetric = document.getElementById('isAsymmetric').checked;
+    var mainWingRatio = isAsymmetric && doorType === 'Kétszárnyú' ? 
+        parseInt(document.getElementById('mainWingRatio').value) : 50;
+
+    // Manuális beállítások ellenőrzése
+    var manualHorizontalPositions = [];
+    var manualVerticalPositions = [];
+
+    if (document.getElementById('door-manual-settings-checkbox').checked) {
+        var horizontalPositionsInputs = document.querySelectorAll('#door-horizontal-positions input[type="number"]');
+        horizontalPositionsInputs.forEach(function(input) {
+            manualHorizontalPositions.push(parseFloat(input.value));
+        });
+        var verticalPositionsInputs = document.querySelectorAll('#door-vertical-positions input[type="number"]');
+        verticalPositionsInputs.forEach(function(input) {
+            manualVerticalPositions.push(parseFloat(input.value));
+        });
+    }
+
+    // Ellenőrzések
+    if (!doorframeWoodWidth || !doorframeWoodThickness || !doorframeWidth || !doorframeHeight || !doorCount ||
+        !tenonLength || !doorFriezeWidth || !doorFriezeThickness ||
+        !lowerTenonedWidth || !lowerTenonedThickness ||
+        !upperTenonedWidth || !upperTenonedThickness ||
+        !verticalDivisionWidth || !verticalDivisionThickness) {
+        return null;
+    }
+
+    // Visszatérés a paraméterekkel
+    return {
+        element_type: "Ajtó",
+        door_frame_wood_width: doorframeWoodWidth,
+        door_frame_wood_thickness: doorframeWoodThickness,
+        door_frame_width: doorframeWidth,
+        door_frame_height: doorframeHeight,
+        door_sash_width_deduction: doorSashWidthDeduction,
+        door_sash_height_deduction: doorSashHeightDeduction,
+        door_type: doorType,
+        door_count: doorCount,
+        tenon_length: tenonLength,
+        door_frieze_width: doorFriezeWidth,
+        door_frieze_thickness: doorFriezeThickness,
+        lower_tenoned_width: lowerTenonedWidth,
+        lower_tenoned_thickness: lowerTenonedThickness,
+        middle_division_width: middleDivisionWidth,
+        middle_division_thickness: middleDivisionThickness,
+        horizontal_divisions: horizontalDivisions,
+        upper_tenoned_width: upperTenonedWidth,
+        upper_tenoned_thickness: upperTenonedThickness,
+        vertical_division_width: verticalDivisionWidth,
+        vertical_division_thickness: verticalDivisionThickness,
+        vertical_divisions: verticalDivisions,
+        manualHorizontalPositions: manualHorizontalPositions,
+        manualVerticalPositions: manualVerticalPositions,
+        is_asymmetric: isAsymmetric,          // Új sor
+        main_wing_ratio: mainWingRatio,       // Új sor
+        useAluminumThreshold: document.getElementById('useAluminumThreshold').checked,
+        disable_narrow_wing_vertical_divisions: disableNarrowWingVerticalDivisions  // Javítva
+        
+    };
+}
+
+function drawDoor(params) {
+    canvas.clear();
+    var scale = Math.min(600 / params.door_frame_width, 1000 / params.door_frame_height);
+    var width = params.door_frame_width * scale;
+    var height = params.door_frame_height * scale;
+    var friezeWidth = (params.door_frieze_width || 0) * scale;
+    var tenonLength = (params.tenon_length || 0) * scale;
+
+    // Ajtókeret
+    canvas.add(new fabric.Rect({
+        left: 0,
+        top: 0,
+        width: width,
+        height: height,
+        fill: 'transparent',
+        stroke: '#333',
+        strokeWidth: 2
+    }));
+
+    // Csapos elemek
+    var lowerTenonedWidth = (params.lower_tenoned_width || 0) * scale;
+    var upperTenonedWidth = (params.upper_tenoned_width || 0) * scale;
+    var csaposWidth = width - (2 * friezeWidth) + (2 * tenonLength);
+
+    // Alsó és felső csapos
+    canvas.add(new fabric.Rect({
+        left: friezeWidth - tenonLength,
+        top: height - lowerTenonedWidth,
+        width: csaposWidth,
+        height: lowerTenonedWidth,
+        fill: '#555',
+        stroke: '#333',
+        strokeWidth: 1
+    }));
+
+    canvas.add(new fabric.Rect({
+        left: friezeWidth - tenonLength,
+        top: 0,
+        width: csaposWidth,
+        height: upperTenonedWidth,
+        fill: '#555',
+        stroke: '#333',
+        strokeWidth: 1
+    }));
+
+    // Vízszintes osztók
+    if (params.horizontal_divisions > 0) {
+        var divisionHeight = (params.middle_division_width || 0) * scale;
+        var availableHeight = height - upperTenonedWidth - lowerTenonedWidth;
+        var spacing = availableHeight / (parseInt(params.horizontal_divisions) + 1);
+        
+        for (var i = 1; i <= params.horizontal_divisions; i++) {
+            var y = upperTenonedWidth + (spacing * i);
+            canvas.add(new fabric.Line([friezeWidth - tenonLength, y, width - friezeWidth + tenonLength, y], {
+                stroke: '#333',
+                strokeWidth: divisionHeight
+            }));
+        }
+    }
+
+    // Függőleges osztók és frízek
+    var verticalDivisions = parseInt(params.vertical_divisions) || 0;
+    var verticalDivisionWidth = (params.vertical_division_width || 0) * scale;
+
+    if (params.door_type === 'Kétszárnyú') {
+        var mainWingWidth = params.is_asymmetric ? 
+            width * (params.main_wing_ratio / 100) : 
+            width / 2;
+
+        if (params.is_asymmetric) {
+            // Aszimmetrikus kétszárnyú osztók
+            var mainInnerWidth = mainWingWidth - (2 * friezeWidth);
+            var secondInnerWidth = (width - mainWingWidth) - (2 * friezeWidth);
+            
+            if (verticalDivisions > 0) {
+                // Szélesebb szárny osztói
+                var mainDivSpacing = mainInnerWidth / (verticalDivisions + 1);
+                for (var i = 1; i <= verticalDivisions; i++) {
+                    var x = friezeWidth + (i * mainDivSpacing);
+                    canvas.add(new fabric.Line([x, upperTenonedWidth, x, height - lowerTenonedWidth], {
+                        stroke: '#333',
+                        strokeWidth: verticalDivisionWidth
+                    }));
+                }
+
+                // Keskenyebb szárny osztói
+                if (!params.disable_narrow_wing_vertical_divisions) {
+                    var secondDivSpacing = secondInnerWidth / (verticalDivisions + 1);
+                    for (var i = 1; i <= verticalDivisions; i++) {
+                        var x = mainWingWidth + friezeWidth + (i * secondDivSpacing);
+                        canvas.add(new fabric.Line([x, upperTenonedWidth, x, height - lowerTenonedWidth], {
+                            stroke: '#333',
+                            strokeWidth: verticalDivisionWidth
+                        }));
+                    }
+                }
+            }
+
+            // Aszimmetrikus frízek
+            canvas.add(new fabric.Rect({left: 0, top: 0, width: friezeWidth, height: height, fill: '#8B4513'}));
+            canvas.add(new fabric.Rect({left: mainWingWidth - friezeWidth, top: 0, width: friezeWidth, height: height, fill: '#8B4513'}));
+            canvas.add(new fabric.Rect({left: mainWingWidth, top: 0, width: friezeWidth, height: height, fill: '#8B4513'}));
+            canvas.add(new fabric.Rect({left: width - friezeWidth, top: 0, width: friezeWidth, height: height, fill: '#8B4513'}));
+        } else {
+            // Szimmetrikus kétszárnyú osztók
+            var innerHalfWidth = (width/2) - (2 * friezeWidth);
+            
+            if (verticalDivisions > 0) {
+                var divSpacing = innerHalfWidth / (verticalDivisions + 1);
+                // Mindkét szárny osztói
+                for (var i = 1; i <= verticalDivisions; i++) {
+                    // Bal szárny
+                    var x1 = friezeWidth + (i * divSpacing);
+                    // Jobb szárny
+                    var x2 = (width/2) + friezeWidth + (i * divSpacing);
+                    
+                    canvas.add(new fabric.Line([x1, upperTenonedWidth, x1, height - lowerTenonedWidth], {
+                        stroke: '#333',
+                        strokeWidth: verticalDivisionWidth
+                    }));
+                    canvas.add(new fabric.Line([x2, upperTenonedWidth, x2, height - lowerTenonedWidth], {
+                        stroke: '#333',
+                        strokeWidth: verticalDivisionWidth
+                    }));
+                }
+            }
+
+            // Szimmetrikus frízek
+            canvas.add(new fabric.Rect({left: 0, top: 0, width: friezeWidth, height: height, fill: '#8B4513'}));
+            canvas.add(new fabric.Rect({left: width/2 - friezeWidth, top: 0, width: friezeWidth, height: height, fill: '#8B4513'}));
+            canvas.add(new fabric.Rect({left: width/2, top: 0, width: friezeWidth, height: height, fill: '#8B4513'}));
+            canvas.add(new fabric.Rect({left: width - friezeWidth, top: 0, width: friezeWidth, height: height, fill: '#8B4513'}));
+        }
+
+        // Középvonal
+        canvas.add(new fabric.Line([mainWingWidth, 0, mainWingWidth, height], {
+            stroke: '#333',
+            strokeWidth: 1,
+            strokeDashArray: [5, 5]
+        }));
+    } else {
+        // Egyszárnyú ajtó osztói és frízei
+        var innerWidth = width - (2 * friezeWidth);
+        if (verticalDivisions > 0) {
+            var divSpacing = innerWidth / (verticalDivisions + 1);
+            for (var i = 1; i <= verticalDivisions; i++) {
+                var x = friezeWidth + (i * divSpacing);
+                canvas.add(new fabric.Line([x, upperTenonedWidth, x, height - lowerTenonedWidth], {
+                    stroke: '#333',
+                    strokeWidth: verticalDivisionWidth
+                }));
+            }
+        }
+        
+        // Egyszárnyú frízek
+        canvas.add(new fabric.Rect({left: 0, top: 0, width: friezeWidth, height: height, fill: '#8B4513'}));
+        canvas.add(new fabric.Rect({left: width - friezeWidth, top: 0, width: friezeWidth, height: height, fill: '#8B4513'}));
+    }
+
+    canvas.renderAll();
+}
+
+    // 6. Beltéri ajtó függvények
+    function submitInteriorDoorParams() {
+    var params = collectInteriorDoorParams();
+    if (params) {
+        saveFormValues();
+        console.log("Beltéri ajtó paraméterek küldése:", params);
+        sketchup.generateComponents(JSON.stringify(params));  // Ez a kulcsfontosságú sor
+        drawInteriorDoor(params);
+    }
+}
+
+    function collectInteriorDoorParams() {
+        var frameWoodWidth = document.getElementById('interior_door_frame_wood_width').value;
+        var frameWoodThickness = document.getElementById('interior_door_frame_wood_thickness').value;
+        var frameWidth = document.getElementById('interior_door_frame_width').value;
+        var frameHeight = document.getElementById('interior_door_frame_height').value;
+        var doorSashWidthDeduction = document.getElementById('interior_door_sash_width_deduction').value;
+        var doorSashHeightDeduction = document.getElementById('interior_door_sash_height_deduction').value;
+        var doorCount = document.getElementById('interior_door_count').value;
+
+        var tenonLength = document.getElementById('interior_tenon_length').value;
+        var doorFriezeWidth = document.getElementById('interior_door_frieze_width').value;
+        var doorFriezeThickness = document.getElementById('interior_door_frieze_thickness').value;
+
+        var lowerTenonedWidth = document.getElementById('interior_lower_tenoned_width').value;
+        var lowerTenonedThickness = document.getElementById('interior_lower_tenoned_thickness').value;
+
+        var middleDivisionWidth = document.getElementById('interior_middle_division_width').value;
+        var middleDivisionThickness = document.getElementById('interior_middle_division_thickness').value;
+        var horizontalDivisions = document.getElementById('interior_horizontal_divisions').value;
+
+        var upperTenonedWidth = document.getElementById('interior_upper_tenoned_width').value;
+        var upperTenonedThickness = document.getElementById('interior_upper_tenoned_thickness').value;
+
+        var verticalDivisionWidth = document.getElementById('interior_vertical_division_width').value;
+        var verticalDivisionThickness = document.getElementById('interior_vertical_division_thickness').value;
+        var verticalDivisions = document.getElementById('interior_vertical_divisions').value;
+
+        if (!frameWoodWidth || !frameWoodThickness || !frameWidth || !frameHeight || !doorCount) {
+            alert('Kérjük, töltse ki az összes kötelező mezőt.');
+            return null;
+        }
+
+        return {
+            element_type: "Beltéri ajtó",
+            door_frame_wood_width: frameWoodWidth,
+            door_frame_wood_thickness: frameWoodThickness,
+            door_frame_width: frameWidth,
+            door_frame_height: frameHeight,
+            door_sash_width_deduction: doorSashWidthDeduction,
+            door_sash_height_deduction: doorSashHeightDeduction,
+            door_count: doorCount,
+            tenon_length: tenonLength,
+            door_frieze_width: doorFriezeWidth,
+            door_frieze_thickness: doorFriezeThickness,
+            lower_tenoned_width: lowerTenonedWidth,
+            lower_tenoned_thickness: lowerTenonedThickness,
+            middle_division_width: middleDivisionWidth,
+            middle_division_thickness: middleDivisionThickness,
+            horizontal_divisions: horizontalDivisions,
+            upper_tenoned_width: upperTenonedWidth,
+            upper_tenoned_thickness: upperTenonedThickness,
+            vertical_division_width: verticalDivisionWidth,
+            vertical_division_thickness: verticalDivisionThickness,
+            vertical_divisions: verticalDivisions
+        };
+    }
+
+    function drawInteriorDoor(params) {
+        interiorCanvas.clear();
+
+        var scale = Math.min(600 / params.door_frame_width, 1000 / params.door_frame_height);
+        var width = params.door_frame_width * scale;
+        var height = params.door_frame_height * scale;
+
+        // Door frame
+        var door = new fabric.Rect({
+            left: 0,
+            top: 0,
+            width: width,
+            height: height,
+            fill: 'transparent',
+            stroke: '#333',
+            strokeWidth: 2
+        });
+        interiorCanvas.add(door);
+
+        // Ajtó frízek
+        var friezeWidth = (params.door_frieze_width || 0) * scale;
+        var friezeThickness = (params.door_frieze_thickness || 0) * scale;
+
+        // Bal oldali fríz
+        var leftFrieze = new fabric.Rect({
+            left: 0,
+            top: 0,
+            width: friezeWidth,
+            height: height,
+            fill: '#8B4513'
+        });
+        interiorCanvas.add(leftFrieze);
+
+        // Jobb oldali fríz
+        var rightFrieze = new fabric.Rect({
+            left: width - friezeWidth,
+            top: 0,
+            width: friezeWidth,
+            height: height,
+            fill: '#8B4513'
+        });
+        interiorCanvas.add(rightFrieze);
+
+        // Függőleges osztók
+        var verticalDivisionCount = parseInt(params.vertical_divisions) || 0;
+        var verticalDivisionWidth = (params.vertical_division_width || 0) * scale;
+        var horizontalPositions = Array.from({length: params.horizontal_divisions}, (_, i) => 
+            (i + 1) * height / (parseInt(params.horizontal_divisions) + 1));
+
+        for (var vIndex = 0; vIndex < verticalDivisionCount; vIndex++) {
+            for (var segmentIndex = 0; segmentIndex < horizontalPositions.length + 1; segmentIndex++) {
+                var yStart = segmentIndex === 0 ? 0 : horizontalPositions[segmentIndex - 1];
+                var yEnd = segmentIndex === horizontalPositions.length ? height : horizontalPositions[segmentIndex];
+                var x = (vIndex + 1) * width / (verticalDivisionCount + 1);
+
+                var line = new fabric.Line([x, yStart, x, yEnd], {
+                    stroke: '#333',
+                    strokeWidth: verticalDivisionWidth
+                });
+                interiorCanvas.add(line);
+            }
+        }
+
+        interiorCanvas.renderAll();
+    }
+
+    // 7. Villanyóra szekrény függvények
+    function submitElectricBoxDoorParams() {
+    var params = collectElectricBoxDoorParams();
+    if (params) {
+        saveFormValues();
+        console.log("Villanyóra szekrény ajtó paraméterek küldése:", params);
+        sketchup.generateComponents(JSON.stringify(params));  // Ez a kulcsfontosságú sor
+        drawElectricBoxDoor(params);
+    }
+}
+
+    function collectElectricBoxDoorParams() {
+        var frameWoodWidth = document.getElementById('electric_box_door_frame_wood_width').value;
+        var frameWoodThickness = document.getElementById('electric_box_door_frame_wood_thickness').value;
+        var frameWidth = document.getElementById('electric_box_door_frame_width').value;
+        var frameHeight = document.getElementById('electric_box_door_frame_height').value;
+        var doorSashWidthDeduction = document.getElementById('electric_box_door_sash_width_deduction').value;
+        var doorSashHeightDeduction = document.getElementById('electric_box_door_sash_height_deduction').value;
+        var doorCount = document.getElementById('electric_box_door_count').value;
+
+        var tenonLength = document.getElementById('electric_box_tenon_length').value;
+        var doorFriezeWidth = document.getElementById('electric_box_door_frieze_width').value;
+        var doorFriezeThickness = document.getElementById('electric_box_door_frieze_thickness').value;
+
+        var lowerTenonedWidth = document.getElementById('electric_box_lower_tenoned_width').value;
+        var lowerTenonedThickness = document.getElementById('electric_box_lower_tenoned_thickness').value;
+
+        var middleDivisionWidth = document.getElementById('electric_box_middle_division_width').value;
+        var middleDivisionThickness = document.getElementById('electric_box_middle_division_thickness').value;
+        var horizontalDivisions = document.getElementById('electric_box_horizontal_divisions').value;
+
+        var upperTenonedWidth = document.getElementById('electric_box_upper_tenoned_width').value;
+        var upperTenonedThickness = document.getElementById('electric_box_upper_tenoned_thickness').value;
+
+        var verticalDivisionWidth = document.getElementById('electric_box_vertical_division_width').value;
+        var verticalDivisionThickness = document.getElementById('electric_box_vertical_division_thickness').value;
+        var verticalDivisions = document.getElementById('electric_box_vertical_divisions').value;
+
+        if (!frameWoodWidth || !frameWoodThickness || !frameWidth || !frameHeight || !doorCount) {
+            alert('Kérjük, töltse ki az összes kötelező mezőt.');
+            return null;
+        }
+
+        return {
+            element_type: "Villanyóra szekrény ajtó",
+            door_frame_wood_width: frameWoodWidth,
+            door_frame_wood_thickness: frameWoodThickness,
+            door_frame_width: frameWidth,
+            door_frame_height: frameHeight,
+            door_sash_width_deduction: doorSashWidthDeduction,
+            door_sash_height_deduction: doorSashHeightDeduction,
+            door_count: doorCount,
+            tenon_length: tenonLength,
+            door_frieze_width: doorFriezeWidth,
+            door_frieze_thickness: doorFriezeThickness,
+            lower_tenoned_width: lowerTenonedWidth,
+            lower_tenoned_thickness: lowerTenonedThickness,
+            middle_division_width: middleDivisionWidth,
+            middle_division_thickness: middleDivisionThickness,
+            horizontal_divisions: horizontalDivisions,
+            upper_tenoned_width: upperTenonedWidth,
+            upper_tenoned_thickness: upperTenonedThickness,
+            vertical_division_width: verticalDivisionWidth,
+            vertical_division_thickness: verticalDivisionThickness,
+            vertical_divisions: verticalDivisions
+        };
+    }
+
+    function drawElectricBoxDoor(params) {
+        electricBoxCanvas.clear();
+
+        var scale = Math.min(600 / params.door_frame_width, 1000 / params.door_frame_height);
+        var width = params.door_frame_width * scale;
+        var height = params.door_frame_height * scale;
+
+        // Door frame
+        var door = new fabric.Rect({
+            left: 0,
+            top: 0,
+            width: width,
+            height: height,
+            fill: 'transparent',
+            stroke: '#333',
+            strokeWidth: 2
+        });
+        electricBoxCanvas.add(door);
+
+        // Ajtó frízek
+        var friezeWidth = (params.door_frieze_width || 0) * scale;
+        var friezeThickness = (params.door_frieze_thickness || 0) * scale;
+
+        // Bal oldali fríz
+        var leftFrieze = new fabric.Rect({
+            left: 0,
+            top: 0,
+            width: friezeWidth,
+            height: height,
+            fill: '#8B4513'
+        });
+        electricBoxCanvas.add(leftFrieze);
+
+        // Jobb oldali fríz
+        var rightFrieze = new fabric.Rect({
+            left: width - friezeWidth,
+            top: 0,
+            width: friezeWidth,
+            height: height,
+            fill: '#8B4513'
+        });
+        electricBoxCanvas.add(rightFrieze);
+
+        // Függőleges osztók
+        var verticalDivisionCount = parseInt(params.vertical_divisions) || 0;
+        var verticalDivisionWidth = (params.vertical_division_width || 0) * scale;
+        var horizontalPositions = Array.from({length: params.horizontal_divisions}, (_, i) => 
+            (i + 1) * height / (parseInt(params.horizontal_divisions) + 1));
+
+        for (var vIndex = 0; vIndex < verticalDivisionCount; vIndex++) {
+            for (var segmentIndex = 0; segmentIndex < horizontalPositions.length + 1; segmentIndex++) {
+                var yStart = segmentIndex === 0 ? 0 : horizontalPositions[segmentIndex - 1];
+                var yEnd = segmentIndex === horizontalPositions.length ? height : horizontalPositions[segmentIndex];
+                var x = (vIndex + 1) * width / (verticalDivisionCount + 1);
+
+                var line = new fabric.Line([x, yStart, x, yEnd], {
+                    stroke: '#333',
+                    strokeWidth: verticalDivisionWidth
+                });
+                electricBoxCanvas.add(line);
+            }
+        }
+
+        // Vízszintes osztók
+        var horizontalDivisionCount = parseInt(params.horizontal_divisions) || 0;
+        var horizontalDivisionWidth = (params.middle_division_width || 0) * scale;
+
+        for (var i = 0; i < horizontalPositions.length; i++) {
+            var y = horizontalPositions[i];
+            var line = new fabric.Line([0, y, width, y], {
+                stroke: '#333',
+                strokeWidth: horizontalDivisionWidth
+            });
+            electricBoxCanvas.add(line);
+        }
+
+        // Alsó csapos
+        var lowerTenonedWidth = (params.lower_tenoned_width || 0) * scale;
+        if (lowerTenonedWidth > 0) {
+            var lowerTenoned = new fabric.Rect({
+                left: 0,
+                top: height - lowerTenonedWidth,
+                width: width,
+                height: lowerTenonedWidth,
+                fill: '#555',
+                stroke: '#333',
+                strokeWidth: 1
+            });
+            electricBoxCanvas.add(lowerTenoned);
+        }
+
+        // Felső csapos
+        var upperTenonedWidth = (params.upper_tenoned_width || 0) * scale;
+        if (upperTenonedWidth > 0) {
+            var upperTenoned = new fabric.Rect({
+                left: 0,
+                top: 0,
+                width: width,
+                height: upperTenonedWidth,
+                fill: '#555',
+                stroke: '#333',
+                strokeWidth: 1
+            });
+            electricBoxCanvas.add(upperTenoned);
+        }
+
+        electricBoxCanvas.renderAll();
+    }
+        // Vízszintes osztók számának figyelése
+        document.getElementById('door_horizontal_divisions').addEventListener('change', function() {
+            if (document.getElementById('door-manual-settings-checkbox').checked) {
+                const count = parseInt(this.value) || 0;
+                generateHorizontalInputs(count);
+            }
+        });
+        
+        // Manuális beállítások checkbox figyelése
+        document.getElementById('door-manual-settings-checkbox').addEventListener('change', function() {
+            const manualSettings = document.getElementById('door-manual-settings');
+            if (this.checked) {
+                manualSettings.style.display = 'block';
+                const count = parseInt(document.getElementById('door_horizontal_divisions').value) || 0;
+                generateHorizontalInputs(count);
+            } else {
+                manualSettings.style.display = 'none';
+            }
+        });
+        
+        // Beviteli mezők generálása
+        function generateHorizontalInputs(count) {
+            const container = document.getElementById('door-horizontal-positions');
+            container.innerHTML = '';
+            
+            if (count > 0) {
+                // Címke hozzáadása
+                const title = document.createElement('h4');
+                title.textContent = 'Vízszintes osztók távolságai:';
+                container.appendChild(title);
+                
+                // Info szöveg
+                const info = document.createElement('p');
+                info.textContent = 'Add meg az osztók közötti távolságokat (mm):';
+                info.style.fontSize = '0.9em';
+                info.style.color = '#888';
+                container.appendChild(info);
+        
+                // Beviteli mezők generálása minden osztóhoz
+                for (let i = 0; i < count; i++) {
+                    const div = document.createElement('div');
+                    div.className = 'form-item';
+                    
+                    const label = document.createElement('label');
+                    if (i === 0) {
+                        label.textContent = 'Alsó csapos és első osztó közti távolság:';
+                    } else {
+                        label.textContent = `${i}. és ${i+1}. osztó közti távolság:`;
+                    }
+                    
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.id = `horizontal-distance-${i}`;
+                    input.className = 'horizontal-distance';
+                    input.step = '0.1';
+                    input.min = '0';
+                    input.onchange = calculateRemainingDistance;
+                    
+                    div.appendChild(label);
+                    div.appendChild(input);
+                    container.appendChild(div);
+                }
+        
+                // Maradék távolság megjelenítése
+                const remainingDiv = document.createElement('div');
+                remainingDiv.className = 'form-item';
+                
+                const remainingLabel = document.createElement('label');
+                remainingLabel.textContent = 'Utolsó osztó és felső csapos közti távolság:';
+                
+                const remainingSpan = document.createElement('span');
+                remainingSpan.id = 'remaining-distance';
+                remainingSpan.textContent = 'Add meg a többi távolságot...';
+                
+                remainingDiv.appendChild(remainingLabel);
+                remainingDiv.appendChild(remainingSpan);
+                container.appendChild(remainingDiv);
+            }
+        }
+        
+        // Maradék távolság számítása
+        function calculateRemainingDistance() {
+            const doorHeight = parseFloat(document.getElementById('door_frame_height').value) || 0;
+            const lowerTenonWidth = parseFloat(document.getElementById('door_lower_tenoned_width').value) || 0;
+            const upperTenonWidth = parseFloat(document.getElementById('door_upper_tenoned_width').value) || 0;
+            const divisionWidth = parseFloat(document.getElementById('door_middle_division_width').value) || 0;
+            const tenonLength = parseFloat(document.getElementById('tenon_length').value) || 0;
+            const horizontalDivCount = parseInt(document.getElementById('door_horizontal_divisions').value) || 0;
+        
+            // Belső magasság számítása
+            const innerHeight = doorHeight - (lowerTenonWidth + upperTenonWidth);
+            
+            // Megadott távolságok összegzése
+            let totalUsedDistance = 0;
+            let allDistancesFilled = true;
+            
+            // Ellenőrizzük az összes beviteli mezőt
+            for (let i = 0; i < horizontalDivCount; i++) {
+                const input = document.getElementById(`horizontal-distance-${i}`);
+                const distance = parseFloat(input.value);
+                
+                if (isNaN(distance)) {
+                    allDistancesFilled = false;
+                    break;
+                }
+                
+                totalUsedDistance += distance + (2 * tenonLength); // Hozzáadjuk a csaphosszakat
+            }
+        
+            // Osztók szélességének hozzáadása
+            totalUsedDistance += divisionWidth * horizontalDivCount;
+        
+            // Eredmény megjelenítése
+            const remainingSpan = document.getElementById('remaining-distance');
+            
+            if (!allDistancesFilled) {
+                remainingSpan.textContent = 'Add meg az összes távolságot...';
+                remainingSpan.style.color = '#888';
+            } else {
+                const remainingDistance = innerHeight - totalUsedDistance;
+                
+                if (remainingDistance < 0) {
+                    remainingSpan.textContent = 'HIBA: A megadott távolságok túl nagyok!';
+                    remainingSpan.style.color = 'red';
+                } else {
+                    remainingSpan.textContent = `${remainingDistance.toFixed(1)} mm`;
+                    remainingSpan.style.color = '#fff';
+                }
+            }
+        }
+        // Az ajtó típus változását kezelő függvény
+        function handleDoorTypeChange() {
+        const doorType = document.getElementById('door_type').value;
+        const asymmetricOptions = document.getElementById('asymmetricOptions');
+        
+        // Küldjük az adatokat a Ruby kódnak
+        if (typeof sketchup !== 'undefined') {
+            sketchup.doorTypeChanged(JSON.stringify({
+                doorType: doorType
+            }));
+        }
+
+        // Azonnali UI frissítés
+        asymmetricOptions.style.display = doorType === 'Kétszárnyú' ? 'block' : 'none';
+        if (doorType !== 'Kétszárnyú') {
+            document.getElementById('isAsymmetric').checked = false;
+            document.getElementById('asymmetricInputs').style.display = 'none';
+        }
+    }
+
+    // Az aszimmetrikus beállítás változását kezelő függvény
+    function handleAsymmetricChange() {
+        const isAsymmetric = document.getElementById('isAsymmetric').checked;
+        const asymmetricInputs = document.getElementById('asymmetricInputs');
+        var doorType = document.getElementById('door_type').value;
+
+        if (isAsymmetric && doorType === 'Kétszárnyú') {
+        asymmetricInputs.style.display = 'block';
+    } else {
+        asymmetricInputs.style.display = 'none';
+        document.getElementById('mainWingRatio').value = 50;
+        document.getElementById('skipNarrowWingVertical').checked = false;
+    }
+
+        
+        // Küldjük az adatokat a Ruby kódnak
+        if (typeof sketchup !== 'undefined') {
+            sketchup.updateAsymmetricSettings(JSON.stringify({
+                isAsymmetric: isAsymmetric
+            }));
+        }
+
+        // Azonnali UI frissítés
+        asymmetricInputs.style.display = isAsymmetric ? 'block' : 'none';
+    }
+
+    // 8. Segédfüggvények
+    function saveFormValues() {
+        var inputs = document.querySelectorAll('input[type="number"], select');
+        inputs.forEach(function(input) {
+            localStorage.setItem(input.id, input.value);
+        });
+    }
+
+    function loadFormValues() {
+        var inputs = document.querySelectorAll('input[type="number"], select');
+        inputs.forEach(function(input) {
+            var savedValue = localStorage.getItem(input.id);
+            if (savedValue !== null) {
+                input.value = savedValue;
+            }
+        });
+    }
+
+    function updateComponentList(componentList) {
+        var contentDiv = document.getElementById('componentListContent');
+        contentDiv.innerHTML = '';
+        var currentIndex = -1;
+        componentList.forEach(function(item) {
+            if (item.startsWith('<button')) {
+                currentIndex++;
+                var updatedItem = item.replace(/deleteWindow\\\\\\\\\\\\\\\\(\\\\\\\\\\\\\\\\d+\\\\\\\\\\\\\\\\)/, 'deleteWindow(' + currentIndex + ')');
+                contentDiv.innerHTML += updatedItem + '<br>';
+            } else if (item === '') {
+                contentDiv.innerHTML += '<hr>';
+            } else {
+                contentDiv.innerHTML += '<p>' + item + '</p>';
+            }
+        });
+    }
+
+    function deleteWindow(index) {
+        console.log('Törlés kérése indexnél:', index);
+        sketchup.deleteWindow(index);
+    }
+
+    function generateComponents() {
+        console.log("Alkatrészek generálása.");
+        sketchup.generateWindowParts();
+    }
+  </script>
+   
+ </script>
+</body>
+</html>

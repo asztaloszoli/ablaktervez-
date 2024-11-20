@@ -1,0 +1,9 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+gem 'rspec', '~> 3.13.0'  # A hibaüzenet szerinti verzió
+gem 'rspec-core'
+gem 'rspec-expectations'
+gem 'rspec-mocks'
+gem 'sketchup-api', '~> 1.0'  # Ha szükséges a SketchUp API-hoz
