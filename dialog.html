@@ -110,6 +110,15 @@
       .component-list p {
         margin: 5px 0;
       }
+      .component-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 5px;
+          margin: 5px 0;
+          background-color: #555;
+          border-radius: 4px;
+      }
   
       .component-list button {
         margin-left: 10px;
@@ -151,6 +160,34 @@
         border: 1px solid #777;
         border-radius: 4px;
         background-color: #333;
+      }
+
+      .list-actions {
+        margin: 20px 0;
+        text-align: center;
+      }
+      
+      .action-button {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        margin: 0 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+      
+      .action-button:hover {
+        background-color: #45a049;
+      }
+      
+      .status-message {
+        margin: 10px 0;
+        padding: 10px;
+        text-align: center;
+        color: #4CAF50;
+        font-weight: bold;
       }
     </style>
   </head>
@@ -659,8 +696,12 @@
     <!-- Generált elemlista -->
     <div class="component-list" id="componentList">
       <h2>Generált Elemlista</h2>
-      <div id="componentListContent"></div>
-    </div>
+  </div>
+  
+  <div class="list-actions">
+      <button onclick="saveList()" class="action-button">Lista mentése</button>
+      <button onclick="printList()" class="action-button">Lista nyomtatása</button>
+  </div>
   
     <!-- Alkatrészek létrehozása gomb -->
     <div class="form-button">
@@ -668,6 +709,7 @@
     </div>
 
   <script>
+    let hasUnsavedChanges = false;  // Globális változó a nem mentett változások követésére
     // 1. Canvas változók deklarálása
     var canvas = new fabric.Canvas('doorPreviewCanvas');
     var interiorCanvas = new fabric.Canvas('interiorDoorPreviewCanvas');
@@ -1598,13 +1640,85 @@ function drawDoor(params) {
     }
 
     function updateComponentList(componentList) {
-        var contentDiv = document.getElementById('componentListContent');
-        contentDiv.innerHTML = '';
+        const componentListDiv = document.getElementById('componentList');
+        componentListDiv.innerHTML = '<h2>Generált Elemlista</h2>';
+        
+        let currentIndex = -1;
+        
+        if (componentList && componentList.length > 0) {
+            hasUnsavedChanges = true;  // Van új elem a listában
+            
+            componentList.forEach(function(item) {
+                const div = document.createElement('div');
+                div.className = 'component-item';
+                
+                if (item.startsWith('<button')) {
+                    currentIndex++;
+                    const updatedItem = item.replace(/deleteWindow\(\d+\)/, 'deleteWindow(' + currentIndex + ')');
+                    div.innerHTML = updatedItem;
+                } else if (item === '') {
+                    div.style.borderTop = '1px solid #ccc';
+                    div.style.margin = '10px 0';
+                } else {
+                    div.textContent = item;
+                }
+                
+                componentListDiv.appendChild(div);
+            });
+        } else {
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'component-item';
+            emptyDiv.textContent = 'Nincs generált elem.';
+            componentListDiv.appendChild(emptyDiv);
+            hasUnsavedChanges = false;  // Nincs elem a listában
+        }
+    }
+    
+    // Ezt a részt kell módosítani a dialog.html fájlban:
+    
+    function saveList() {
+        const name = prompt("Adja meg a mentés nevét:");
+        if (name) {
+            const componentList = document.getElementById('componentList');
+            const items = componentList.getElementsByClassName('component-item');
+            const components = [];
+            for (let item of items) {
+                components.push(item.textContent.trim());
+            }
+            
+            if (components.length > 0) {
+                sketchup.saveComponentList(name, components);
+                hasUnsavedChanges = false;
+                updateSaveStatus('Lista mentve!');
+            } else {
+                alert('Nincs menthető elem a listában!');
+            }
+        }
+    }
+    
+    function printList() {
+        const componentList = document.getElementById('componentList');
+        const items = componentList.getElementsByClassName('component-item');
+        const components = [];
+        for (let item of items) {
+            components.push(item.textContent.trim());
+        }
+        
+        if (components.length > 0) {
+            sketchup.printComponentList(components);
+        } else {
+            alert('Nincs nyomtatható lista!');
+        }
+    }
+    
+    function updateComponentList(componentList) {
+        var contentDiv = document.getElementById('componentList');
+        contentDiv.innerHTML = '<h2>Generált Elemlista</h2>';
         var currentIndex = -1;
         componentList.forEach(function(item) {
             if (item.startsWith('<button')) {
                 currentIndex++;
-                var updatedItem = item.replace(/deleteWindow\\\\\\\\\\\\\\\\(\\\\\\\\\\\\\\\\d+\\\\\\\\\\\\\\\\)/, 'deleteWindow(' + currentIndex + ')');
+                var updatedItem = item.replace(/deleteWindow\\\\\\\\\\\\\\\(\\\\\\\\\\\\\\d+\\\\\\\\\\\\\\\)/, 'deleteWindow(' + currentIndex + ')');
                 contentDiv.innerHTML += updatedItem + '<br>';
             } else if (item === '') {
                 contentDiv.innerHTML += '<hr>';
@@ -1613,16 +1727,273 @@ function drawDoor(params) {
             }
         });
     }
-
+    
     function deleteWindow(index) {
         console.log('Törlés kérése indexnél:', index);
         sketchup.deleteWindow(index);
     }
-
+    
     function generateComponents() {
         console.log("Alkatrészek generálása.");
         sketchup.generateWindowParts();
     }
+    
+    function updateSaveStatus(message) {
+        // Ha nem létezik még a saveStatus div, hozzuk létre
+        let statusDiv = document.getElementById('saveStatus');
+        if (!statusDiv) {
+            statusDiv = document.createElement('div');
+            statusDiv.id = 'saveStatus';
+            statusDiv.className = 'status-message';
+            // A list-actions div után szúrjuk be
+            const listActions = document.querySelector('.list-actions');
+            listActions.insertAdjacentElement('afterend', statusDiv);
+        }
+        statusDiv.textContent = message;
+        setTimeout(() => {
+            statusDiv.textContent = '';
+        }, 3000);
+    }
+    
+    
+    function saveList() {
+        const name = prompt("Adja meg a mentés nevét:");
+        if (name) {
+            const componentList = document.getElementById('componentList');
+            const components = Array.from(componentList.getElementsByTagName('p'))
+                .map(item => item.textContent)
+                .filter(text => text.trim() !== '');
+            
+            if (components.length > 0) {
+                sketchup.saveComponentList(name, JSON.stringify(components));
+                hasUnsavedChanges = false;
+                updateSaveStatus('Lista mentve!');
+            } else {
+                alert('Nincs menthető elem a listában!');
+            }
+        }
+    }
+    
+    function printList() {
+    const componentList = document.getElementById('componentList');
+    if (!componentList) {
+        alert('Hiba: Nem található a komponenslista!');
+        return;
+    }
+
+    const components = Array.from(componentList.getElementsByTagName('p'));
+    
+    if (components.length > 0) {
+        // Word-kompatibilis HTML dokumentum struktúrával
+        const printableHtml = `
+            <!DOCTYPE html>
+            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+            <head>
+                <meta charset="UTF-8">
+                <title>Alkatrészlista</title>
+                <!--[if gte mso 9]>
+                <xml>
+                    <w:WordDocument>
+                        <w:View>Print</w:View>
+                        <w:Zoom>90</w:Zoom>
+                        <w:DoNotOptimizeForBrowser/>
+                    </w:WordDocument>
+                </xml>
+                <![endif]-->
+                <style>
+                    @page {
+                        margin: 10mm;
+                    }
+                    
+                    body {
+                        font-family: Arial, sans-serif;
+                        margin: 0;
+                        padding: 0;
+                        font-size: 10pt;
+                        line-height: 1.2;
+                        width: 100%;
+                    }
+                    
+                    h1 {
+                        color: #333;
+                        text-align: center;
+                        font-size: 12pt;
+                        margin: 10px 0;
+                    }
+                    
+                    .components {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 20px;
+                        margin: 0 2mm;
+                    }
+                    
+                    .group {
+                        width: calc(50% - 15px);
+                        margin: 0;
+                        padding: 10px;
+                        border: 1px solid #ccc;
+                        border-radius: 5px;
+                        box-sizing: border-box;
+                        page-break-inside: avoid;
+                    }
+                    
+                    .structure-header {
+                        background-color: #f0f0f0;
+                        padding: 5px;
+                        margin: -10px -10px 10px -10px;
+                        font-weight: bold;
+                        border-bottom: 1px solid #ccc;
+                    }
+                    
+                    .structure-info {
+                        color: #666;
+                        margin-bottom: 10px;
+                        padding-bottom: 5px;
+                        border-bottom: 1px dashed #ccc;
+                    }
+                    
+                    .component {
+                        margin: 5px 0;
+                        padding: 0;
+                    }
+                    
+                    @media print {
+                        body { margin: 0; }
+                        .no-print { display: none; }
+                        .components { gap: 10px; }
+                    }
+
+                    /* Word specifikus stílusok */
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-bottom: 10pt;
+                    }
+                    
+                    td, th {
+                        border: 1pt solid #ccc;
+                        padding: 4pt;
+                        text-align: left;
+                    }
+                    
+                    th {
+                        background-color: #f0f0f0;
+                    }
+                </style>
+            </head>
+            <body>
+                <h1>Alkatrészlista</h1>
+                <div class="components">
+                    ${formatComponentsToGroups(components)}
+                </div>
+            </body>
+            </html>
+        `;
+        
+        sketchup.printComponentList(printableHtml);
+    } else {
+        alert('Nincs nyomtatható elem a listában!');
+    }
+}
+
+function formatComponentsToGroups(components) {
+    let groups = [];
+    let currentGroup = null;
+    let currentComponents = [];
+    
+    components.forEach(comp => {
+        const text = comp.textContent.trim();
+        
+        if (text.includes('Ablak') || text.includes('Ajtó')) {
+            if (currentGroup) {
+                groups.push({
+                    header: currentGroup,
+                    components: [...currentComponents]
+                });
+            }
+            currentGroup = text;
+            currentComponents = [];
+        } else if (text.startsWith('Méret:') || text.startsWith('Típus:')) {
+            if (currentComponents.length === 0) {
+                currentComponents.push({type: 'info', content: text});
+            } else if (currentComponents[0].type === 'info') {
+                currentComponents[0].content += '<br>' + text;
+            }
+        } else if (text) {
+            currentComponents.push({type: 'component', content: text});
+        }
+    });
+    
+    if (currentGroup) {
+        groups.push({
+            header: currentGroup,
+            components: [...currentComponents]
+        });
+    }
+    
+    return groups.map(group => `
+        <div class="group">
+            <div class="structure-header">${group.header}</div>
+            ${group.components.map(comp => 
+                comp.type === 'info' 
+                    ? `<div class="structure-info">${comp.content}</div>`
+                    : `<div class="component">${comp.content}</div>`
+            ).join('')}
+        </div>
+    `).join('');
+}
+    
+    
+    function saveList() {
+        const name = prompt("Adja meg a mentés nevét:");
+        if (name) {
+            const componentList = document.getElementById('componentList');
+            const components = Array.from(componentList.getElementsByTagName('p'));
+            
+            if (components.length > 0) {
+                // HTML formátum létrehozása
+                const htmlContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>Alkatrészlista - ${name}</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            h1 { color: #333; }
+                            .component { margin: 10px 0; padding: 5px; border-bottom: 1px solid #eee; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Alkatrészlista - ${name}</h1>
+                        <div class="components">
+                            ${components.map(item => `<div class="component">${item.textContent}</div>`).join('')}
+                        </div>
+                    </body>
+                    </html>
+                `;
+                
+                sketchup.saveComponentList(name, htmlContent);
+                hasUnsavedChanges = false;
+                updateSaveStatus('Lista mentve!');
+            } else {
+                alert('Nincs menthető elem a listában!');
+            }
+        }
+    }
+    // Bezárás előtti ellenőrzés
+    window.addEventListener('beforeunload', function(e) {
+        if (hasUnsavedChanges) {
+            // Értesítjük a Ruby kódot a nem mentett változásokról
+            if (typeof sketchup !== 'undefined') {
+                sketchup.checkUnsavedChanges();
+                // Megakadályozzuk az azonnali bezárást
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        }
+    });
   </script>
    
  </script>

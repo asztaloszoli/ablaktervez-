@@ -4,6 +4,7 @@ require 'securerandom'  # Importáljuk a SecureRandom modult
 
 module WindowGenerator
   module Main
+    # Public methods
     def self.show_dialog
       dlg = UI::HtmlDialog.new({
         :dialog_title => "Részletes Fa Ablak és Ajtó Tervező",
@@ -346,6 +347,39 @@ module WindowGenerator
       end
     end
 
+   # Lista mentése callback
+   dlg.add_action_callback("saveComponentList") do |action_context, name, html_content|
+     begin
+       # Fájl mentési párbeszédablak megnyitása
+       save_path = UI.savepanel("Mentés másként", "", "#{name}.html")
+       if save_path
+         File.write(save_path, html_content)
+         puts "Lista sikeresen mentve: #{save_path}"
+         dlg.execute_script("updateSaveStatus('Lista mentve!');")
+       end
+     rescue => e
+       puts "Hiba történt a mentés során: #{e.message}"
+       UI.messagebox("Hiba történt a mentés során!")
+     end
+   end
+   
+   # Nyomtatás callback
+   dlg.add_action_callback("printComponentList") do |action_context, html_content|
+     begin
+       # Ideiglenes fájl létrehozása a nyomtatáshoz
+       temp_path = File.join(Dir.tmpdir, "print_preview_#{Time.now.to_i}.html")
+       File.write(temp_path, html_content)
+       
+       # Fájl megnyitása az alapértelmezett böngészőben
+       UI.openURL("file:///#{temp_path}")
+       
+       puts "Nyomtatási előnézet megnyitva"
+     rescue => e
+       puts "Hiba történt a nyomtatás során: #{e.message}"
+       UI.messagebox("Hiba történt a nyomtatási előnézet létrehozása során!")
+     end
+   end
+    
     # Elemek törlése callback
     dlg.add_action_callback("deleteWindow") do |action_context, index|
       index = index.to_i
@@ -371,6 +405,119 @@ module WindowGenerator
       end
     end
 
+    # Bezárás előtti ellenőrzés callback
+    dlg.add_action_callback("checkUnsavedChanges") do |action_context|
+      begin
+        result = UI.messagebox('Van nem mentett elemlista. Szeretné menteni?', MB_YESNO)
+        if result == IDYES
+          # Kérjük be a mentés nevét
+          save_name = UI.inputbox(['Adja meg a mentés nevét:'], [''], 'Mentés névadás')[0]
+          if save_name && !save_name.empty?
+            # Ha a felhasználó megadott egy nevet, küldjük el a JavaScript-nek
+            dlg.execute_script("saveListWithName('#{save_name}');")
+          end
+        end
+      rescue => e
+        puts "Error in checkUnsavedChanges callback: #{e.message}"
+        puts e.backtrace.join("\n")
+      end
+    end
+
+    private
+    
+    def self.generate_printable_html(components, title = nil)
+        # HTML generálása
+        html = <<-HTML
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>#{title || 'Elemlista'}</title>
+                <style>
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        margin: 5px;
+                        line-height: 1.3;
+                        font-size: 12px;
+                    }
+                    h1 {
+                        font-size: 16px;
+                        margin: 10px 0;
+                    }
+                    .component-list {
+                        margin: 10px;
+                        column-count: 2;
+                        column-gap: 20px;
+                    }
+                    .component-item {
+                        padding: 3px 5px;
+                        border-bottom: 1px solid #eee;
+                        break-inside: avoid;
+                    }
+                    .print-button {
+                        display: block;
+                        margin: 10px auto;
+                        padding: 8px 16px;
+                        background-color: #4CAF50;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 14px;
+                    }
+                    .print-button:hover {
+                        background-color: #45a049;
+                    }
+                    @media print {
+                        .print-button {
+                            display: none;
+                        }
+                        body {
+                            margin: 0;
+                            padding: 5mm;
+                        }
+                        @page {
+                            size: A4;
+                            margin: 5mm;
+                        }
+                        .component-list {
+                            margin: 5px;
+                        }
+                        .component-item {
+                            padding: 2px 4px;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                #{title ? "<h1>#{title}</h1>" : ""}
+                <button onclick="window.print()" class="print-button">Nyomtatás</button>
+                <div class="component-list">
+        HTML
+
+        # Ellenőrizzük, hogy a components egy tömb-e
+        if components.is_a?(Array)
+            components.each do |component|
+                if component.is_a?(Array) && component.length >= 4
+                    name, length, width, thickness = component
+                    html += "<div class=\"component-item\">#{name}: #{length}x#{width}x#{thickness}mm</div>\n"
+                else
+                    html += "<div class=\"component-item\">#{component}</div>\n"
+                end
+            end
+        else
+            html += "<div class=\"component-item\">Nincs generált elem.</div>\n"
+        end
+
+        html += <<-HTML
+                </div>
+            </body>
+            </html>
+        HTML
+
+        return html
+    end
+   
     dlg.show
   end
 
@@ -539,9 +686,13 @@ module WindowGenerator
           puts "\n=== Vízszintes osztók ==="
           door_inner_height = sash_external_height - lower_tenoned_width - upper_tenoned_width
             
-          if use_manual_distances && manual_distances
-            puts "Using manual distances for horizontal divisions"
-            manual_distances.each_with_index do |distance, i|
+          if use_manual_distances && manual_horizontal_positions && manual_horizontal_positions.length == horizontal_divisions
+            puts "\nManuális számítás részletei:"
+            puts "Tok magasság: #{frame_height}mm"
+            puts "Nyíló külső magasság: #{sash_external_height}mm"
+            puts "Belső magasság (door_inner_height): #{door_inner_height}mm"
+            
+            manual_horizontal_positions.each_with_index do |distance, i|
               # Szélesebb szárny osztói
               wider_division_length = wider_sash_internal_width + (2 * tenon_length) + overlap_adjustment
               components << ["Szélesebb szárny vízszintes osztó #{i + 1}", 
@@ -560,7 +711,6 @@ module WindowGenerator
             end
           else
             puts "Using automatic calculation for horizontal divisions"
-            # Az eredeti automatikus számítás
             total_horizontal_division_height = horizontal_divisions * middle_division_width
             available_height = door_inner_height - total_horizontal_division_height
             segment_height = available_height / (horizontal_divisions + 1)
@@ -587,37 +737,43 @@ module WindowGenerator
           
         # Függőleges osztók
         if vertical_divisions > 0
+          puts "\n=== Függőleges osztók ==="
           door_inner_height = sash_external_height - lower_tenoned_width - upper_tenoned_width
-          if use_manual_distances && manual_distances
-            puts "Using manual distances for vertical divisions"
-            manual_distances.each_with_index do |distance, i|
+            
+          if use_manual_distances && manual_horizontal_positions && manual_horizontal_positions.length == horizontal_divisions
+            puts "\nManuális számítás részletei:"
+            puts "Tok magasság: #{frame_height}mm"
+            puts "Nyíló külső magasság: #{sash_external_height}mm"
+            puts "Belső magasság (door_inner_height): #{door_inner_height}mm"
+            
+            manual_horizontal_positions.each_with_index do |distance, i|
               # Első szegmens (alsó csapostól az első osztóig)
-              first_segment_height = manual_distances[0] + (2 * tenon_length)
+              first_segment_height = manual_horizontal_positions[0] + (2 * tenon_length)
+              puts "\nElső szegmens számítása:"
+              puts "Manuális távolság: #{manual_horizontal_positions[0]}mm"
+              puts "Csap hossza (2x): #{2 * tenon_length}mm"
+              puts "Első szegmens teljes hossza: #{first_segment_height}mm"
+              
               components << ["Függőleges osztó #{i + 1} - szegmens 1", 
                             first_segment_height, 
                             vertical_division_width, 
                             vertical_division_thickness]
-              puts "Vertical division #{i + 1} segment 1 height: #{first_segment_height} (manual distance: #{manual_distances[0]})"
               
-              # Középső szegmensek (vízszintes osztók között)
-              (horizontal_divisions - 1).times do |i|
-                segment_height = manual_distances[i + 1] + (2 * tenon_length)  # Egyszerűen vesszük a következő értéket
-                components << ["Függőleges osztó #{i + 1} - szegmens #{i + 2}", 
-                              segment_height, 
-                              vertical_division_width, 
-                              vertical_division_thickness]
-                puts "Vertical division #{i + 1} segment #{i + 2} height: #{segment_height} (manual distance: #{manual_distances[i + 1]})"
-              end
-                
-              # Utolsó szegmens (utolsó vízszintes osztótól a felső csaposig)
-              total_used_height = manual_distances.sum
-              remaining_height = door_inner_height - total_used_height - (horizontal_divisions * middle_division_width)
+              # Utolsó szegmens számítása
+              remaining_height = door_inner_height - manual_horizontal_positions[0] - (horizontal_divisions * middle_division_width)
               last_segment_height = remaining_height + (2 * tenon_length)
+              
+              puts "\nUtolsó szegmens számítása:"
+              puts "Belső magasság: #{door_inner_height}mm"
+              puts "Levonás (manuális távolság): #{manual_horizontal_positions[0]}mm"
+              puts "Levonás (vízszintes osztók): #{horizontal_divisions * middle_division_width}mm"
+              puts "Maradék magasság: #{remaining_height}mm"
+              puts "Utolsó szegmens teljes hossza: #{last_segment_height}mm"
+              
               components << ["Függőleges osztó #{i + 1} - utolsó szegmens", 
                             last_segment_height, 
                             vertical_division_width, 
                             vertical_division_thickness]
-              puts "Vertical division #{i + 1} last segment height: #{last_segment_height} (remaining height: #{remaining_height})"
             end
           else
             puts "Using automatic calculation for vertical divisions"
@@ -654,27 +810,52 @@ module WindowGenerator
           
           # Vízszintes osztók
           if horizontal_divisions > 0
-            horizontal_divisions.times do |i|
-              division_length = sash_internal_width + (2 * tenon_length) + overlap_adjustment
-              components << ["#{prefix} szárny vízszintes osztó #{i + 1}", 
-                            division_length, 
-                            middle_division_width, 
-                            middle_division_thickness]
+            if use_manual_distances && manual_horizontal_positions && manual_horizontal_positions.length == horizontal_divisions
+              puts "\nVízszintes osztók manuális távolságokkal (#{prefix} szárny):"
+              manual_horizontal_positions.each_with_index do |distance, i|
+                division_length = sash_internal_width + (2 * tenon_length) + overlap_adjustment
+                components << ["#{prefix} szárny vízszintes osztó #{i + 1}", 
+                              division_length, 
+                              middle_division_width, 
+                              middle_division_thickness]
+                puts "#{prefix} szárny #{i + 1}. osztó távolsága: #{distance}mm"
+              end
             end
           end
           
           # Függőleges osztók
           if vertical_divisions > 0
             door_inner_height = sash_external_height - lower_tenoned_width - upper_tenoned_width
-            total_horizontal_division_height = horizontal_divisions * middle_division_width
-            available_height = door_inner_height - total_horizontal_division_height
-            segment_height = available_height / (horizontal_divisions + 1)
-            
-            vertical_divisions.times do |v_index|
-              (horizontal_divisions + 1).times do |segment_index|
-                segment_height_with_tenon = segment_height + 2 * tenon_length
-                components << ["#{prefix} szárny függőleges osztó #{v_index + 1} - szegmens #{segment_index + 1}", 
-                              segment_height_with_tenon, 
+            if use_manual_distances && manual_horizontal_positions && manual_horizontal_positions.length == horizontal_divisions
+              puts "\nFüggőleges osztók számítása (#{prefix} szárny):"
+              puts "Belső magasság: #{door_inner_height}mm"
+              
+              vertical_divisions.times do |v_index|
+                # Első szegmens (felső csapostól az első vízszintes osztóig)
+                first_segment_height = manual_horizontal_positions[0] + (2 * tenon_length)
+                puts "\nElső szegmens számítása:"
+                puts "Manuális távolság: #{manual_horizontal_positions[0]}mm"
+                puts "Csap hossza (2x): #{2 * tenon_length}mm"
+                puts "Első szegmens teljes hossza: #{first_segment_height}mm"
+                
+                components << ["#{prefix} szárny függőleges osztó #{v_index + 1} - szegmens 1", 
+                              first_segment_height, 
+                              vertical_division_width, 
+                              vertical_division_thickness]
+                
+                # Utolsó szegmens számítása
+                remaining_height = door_inner_height - manual_horizontal_positions[0] - (horizontal_divisions * middle_division_width)
+                last_segment_height = remaining_height + (2 * tenon_length)
+                
+                puts "\nUtolsó szegmens számítása:"
+                puts "Belső magasság: #{door_inner_height}mm"
+                puts "Levonás (manuális távolság): #{manual_horizontal_positions[0]}mm"
+                puts "Levonás (vízszintes osztók): #{horizontal_divisions * middle_division_width}mm"
+                puts "Maradék magasság: #{remaining_height}mm"
+                puts "Utolsó szegmens teljes hossza: #{last_segment_height}mm"
+                
+                components << ["#{prefix} szárny függőleges osztó #{v_index + 1} - utolsó szegmens", 
+                              last_segment_height, 
                               vertical_division_width, 
                               vertical_division_thickness]
               end
@@ -684,24 +865,41 @@ module WindowGenerator
       end
     else
       # Egyszárnyú ajtó esetén
-      sash_external_width = total_sash_width
+      sash_external_width = frame_width - (2 * sash_width_deduction)
+      sash_external_height = frame_height - sash_height_deduction
+
+      # Ajtó belméret számítása
+      total_sash_width = frame_width - door_sash_width_deduction
+      sash_external_height = frame_height - door_sash_height_deduction
+  
+      puts "\n=== Alap méretek ==="
+      puts "Total sash width (teljes nyílószélesség): #{total_sash_width}"
+      puts "Sash external height: #{sash_external_height}"
+  
+      # Ajtó belméret számítása
       sash_internal_width = sash_external_width - (2 * door_frieze_width)
       sash_internal_height = sash_external_height - (lower_tenoned_width + upper_tenoned_width)
-  
-      # Fríz elemek
+
+      # Ajtó belméret számítása
+      door_inner_height = sash_internal_height
+
+      # Csapos elemek hossza
+      lower_tenoned_length = sash_internal_width + (2 * tenon_length)
+      upper_tenoned_length = sash_internal_width + (2 * tenon_length)
+
+      # Ajtó fríz
       components << ["Ajtó fríz bal", sash_external_height, door_frieze_width, door_frieze_thickness]
       components << ["Ajtó fríz jobb", sash_external_height, door_frieze_width, door_frieze_thickness]
-  
-      # Csapos elemek
-      tenoned_length = sash_internal_width + (2 * tenon_length)
-      components << ["Alsó csapos", tenoned_length, lower_tenoned_width, lower_tenoned_thickness]
-      components << ["Felső csapos", tenoned_length, upper_tenoned_width, upper_tenoned_thickness]
-  
+
+      # Alsó és felső csapos
+      components << ["Alsó csapos", lower_tenoned_length, lower_tenoned_width, lower_tenoned_thickness]
+      components << ["Felső csapos", upper_tenoned_length, upper_tenoned_width, upper_tenoned_thickness]
+
       # Vízszintes osztók
       if horizontal_divisions > 0
-        if use_manual_distances && manual_distances && manual_distances.length == horizontal_divisions
+        if use_manual_distances && manual_horizontal_positions && manual_horizontal_positions.length == horizontal_divisions
           puts "Using manual distances for horizontal divisions"
-          manual_distances.each_with_index do |distance, i|
+          manual_horizontal_positions.each_with_index do |distance, i|
             division_length = sash_internal_width + (2 * tenon_length)
             components << ["Vízszintes osztó #{i + 1}", division_length, middle_division_width, middle_division_thickness]
             puts "Manual horizontal division #{i + 1} at distance: #{distance}"
@@ -724,41 +922,40 @@ module WindowGenerator
       # Függőleges osztók
       if vertical_divisions > 0
         door_inner_height = sash_external_height - lower_tenoned_width - upper_tenoned_width
-        if use_manual_distances && manual_distances && manual_distances.length == horizontal_divisions
-          puts "Using manual distances for vertical divisions"
-          
-          # Az első szegmens magassága (alsó csapostól az első osztóig)
-          first_distance = manual_distances[0]
-          first_segment_height = first_distance + (2 * tenon_length)
+        if use_manual_distances && manual_horizontal_positions && manual_horizontal_positions.length == horizontal_divisions
+          puts "\nManuális számítás részletei:"
+          puts "Tok magasság: #{frame_height}mm"
+          puts "Nyíló külső magasság: #{sash_external_height}mm"
+          puts "Belső magasság (door_inner_height): #{door_inner_height}mm"
           
           vertical_divisions.times do |v_index|
             # Első szegmens (alsó csapostól az első osztóig)
-            first_segment_height = manual_distances[0] + (2 * tenon_length)
+            first_segment_height = manual_horizontal_positions[0] + (2 * tenon_length)
+            puts "\nElső szegmens számítása:"
+            puts "Manuális távolság: #{manual_horizontal_positions[0]}mm"
+            puts "Csap hossza (2x): #{2 * tenon_length}mm"
+            puts "Első szegmens teljes hossza: #{first_segment_height}mm"
+            
             components << ["Függőleges osztó #{v_index + 1} - szegmens 1", 
                           first_segment_height, 
                           vertical_division_width, 
                           vertical_division_thickness]
-            puts "Vertical division #{v_index + 1} segment 1 height: #{first_segment_height} (manual distance: #{manual_distances[0]})"
             
-            # Középső szegmensek (vízszintes osztók között)
-            (horizontal_divisions - 1).times do |i|
-              segment_height = manual_distances[i + 1] + (2 * tenon_length)  # Egyszerűen vesszük a következő értéket
-              components << ["Függőleges osztó #{v_index + 1} - szegmens #{i + 2}", 
-                            segment_height, 
-                            vertical_division_width, 
-                            vertical_division_thickness]
-              puts "Vertical division #{v_index + 1} segment #{i + 2} height: #{segment_height} (manual distance: #{manual_distances[i + 1]})"
-            end
-            
-            # Utolsó szegmens (utolsó vízszintes osztótól a felső csaposig)
-            total_used_height = manual_distances.sum
-            remaining_height = door_inner_height - total_used_height - (horizontal_divisions * middle_division_width)
+            # Utolsó szegmens számítása
+            remaining_height = door_inner_height - manual_horizontal_positions[0] - (horizontal_divisions * middle_division_width)
             last_segment_height = remaining_height + (2 * tenon_length)
+            
+            puts "\nUtolsó szegmens számítása:"
+            puts "Belső magasság: #{door_inner_height}mm"
+            puts "Levonás (manuális távolság): #{manual_horizontal_positions[0]}mm"
+            puts "Levonás (vízszintes osztók): #{horizontal_divisions * middle_division_width}mm"
+            puts "Maradék magasság: #{remaining_height}mm"
+            puts "Utolsó szegmens teljes hossza: #{last_segment_height}mm"
+            
             components << ["Függőleges osztó #{v_index + 1} - utolsó szegmens", 
                           last_segment_height, 
                           vertical_division_width, 
                           vertical_division_thickness]
-            puts "Vertical division #{v_index + 1} last segment height: #{last_segment_height} (remaining height: #{remaining_height})"
           end
         else
           puts "Using automatic calculation for vertical divisions"
@@ -767,28 +964,13 @@ module WindowGenerator
           segment_height = available_height / (horizontal_divisions + 1)
           
           vertical_divisions.times do |v_index|
-            # Első szegmens (alsó csapostól az első osztóig)
-            first_segment_height = manual_distances[0] + (2 * tenon_length)
-            components << ["Függőleges osztó #{v_index + 1} - szegmens 1", 
-                          first_segment_height, 
-                          vertical_division_width, 
-                          vertical_division_thickness]
-            puts "Vertical division #{v_index + 1} segment 1 height: #{first_segment_height} (manual distance: #{manual_distances[0]})"
-            
-            # Középső szegmensek (vízszintes osztók között)
-            (horizontal_divisions - 1).times do |i|
-              segment_height = manual_distances[i + 1] + (2 * tenon_length)  # Egyszerűen vesszük a következő értéket
-              components << ["Függőleges osztó #{v_index + 1} - szegmens #{i + 2}", 
-                            segment_height, 
+            (horizontal_divisions + 1).times do |segment_index|
+              segment_height_with_tenon = segment_height + 2 * tenon_length
+              components << ["Függőleges osztó #{v_index + 1} - szegmens #{segment_index + 1}", 
+                            segment_height_with_tenon, 
                             vertical_division_width, 
                             vertical_division_thickness]
-              puts "Vertical division #{v_index + 1} segment #{i + 2} height: #{segment_height} (manual distance: #{manual_distances[i + 1]})"
             end
-            
-            # Utolsó szegmens (utolsó vízszintes osztótól a felső csaposig)
-            total_used_height = manual_distances.sum
-            remaining_height = door_inner_height - total_used_height
-            last_segment_height = remaining_height + (2 * tenon_length)
           end
         end
       end
@@ -1166,8 +1348,101 @@ end
       menu.add_item('Alkatrészek generálása') { self.show_dialog }
       file_loaded(__FILE__)
     end
+
+    private
+
+    def self.generate_printable_html(components, title = nil)
+        # HTML generálása
+        html = <<-HTML
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>#{title || 'Elemlista'}</title>
+                <style>
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        margin: 5px;
+                        line-height: 1.3;
+                        font-size: 12px;
+                    }
+                    h1 {
+                        font-size: 16px;
+                        margin: 10px 0;
+                    }
+                    .component-list {
+                        margin: 10px;
+                        column-count: 2;
+                        column-gap: 20px;
+                    }
+                    .component-item {
+                        padding: 3px 5px;
+                        border-bottom: 1px solid #eee;
+                        break-inside: avoid;
+                    }
+                    .print-button {
+                        display: block;
+                        margin: 10px auto;
+                        padding: 8px 16px;
+                        background-color: #4CAF50;
+                        color: white;
+                        border: none;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 14px;
+                    }
+                    .print-button:hover {
+                        background-color: #45a049;
+                    }
+                    @media print {
+                        .print-button {
+                            display: none;
+                        }
+                        body {
+                            margin: 0;
+                            padding: 5mm;
+                        }
+                        @page {
+                            size: A4;
+                            margin: 5mm;
+                        }
+                        .component-list {
+                            margin: 5px;
+                        }
+                        .component-item {
+                            padding: 2px 4px;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                #{title ? "<h1>#{title}</h1>" : ""}
+                <button onclick="window.print()" class="print-button">Nyomtatás</button>
+                <div class="component-list">
+        HTML
+
+        # Ellenőrizzük, hogy a components egy tömb-e
+        if components.is_a?(Array)
+            components.each do |component|
+                if component.is_a?(Array) && component.length >= 4
+                    name, length, width, thickness = component
+                    html += "<div class=\"component-item\">#{name}: #{length}x#{width}x#{thickness}mm</div>\n"
+                else
+                    html += "<div class=\"component-item\">#{component}</div>\n"
+                end
+            end
+        else
+            html += "<div class=\"component-item\">Nincs generált elem.</div>\n"
+        end
+
+        html += <<-HTML
+                </div>
+            </body>
+            </html>
+        HTML
+
+        return html
+    end
    
-      
-  
-   end  # module Main
- end  # module WindowGenerator
+  end  # module Main
+end  # module WindowGenerator
