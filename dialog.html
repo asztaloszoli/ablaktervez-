@@ -60,6 +60,9 @@
       .form-item {
         flex: 1 1 calc(50% - 20px);
         margin: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
       }
   
       .form-item label {
@@ -68,6 +71,7 @@
         margin-bottom: 5px;
         font-weight: bold;
         color: #e0e0e0;
+        width: 100%;
       }
   
       .form-item input[type="number"], .form-item select, .manual-settings input[type="number"] {
@@ -78,6 +82,11 @@
         border-radius: 4px;
         background-color: #555;
         color: #fff;
+        margin: 0 auto;
+      }
+
+      .form-item input[type="checkbox"] {
+        margin: 10px auto;
       }
   
       .form-button {
@@ -109,15 +118,6 @@
   
       .component-list p {
         margin: 5px 0;
-      }
-      .component-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 5px;
-          margin: 5px 0;
-          background-color: #555;
-          border-radius: 4px;
       }
   
       .component-list button {
@@ -161,33 +161,32 @@
         border-radius: 4px;
         background-color: #333;
       }
+  
+      /* Új stílus a dinamikusan generált form-item elemekhez */
+      #door-horizontal-positions .form-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 10px auto;
+        width: 100%;
+      }
 
-      .list-actions {
-        margin: 20px 0;
+      #door-horizontal-positions .form-item label {
+        width: 100%;
         text-align: center;
+        margin-bottom: 5px;
       }
-      
-      .action-button {
-        background-color: #4CAF50;
-        color: white;
-        padding: 10px 20px;
-        margin: 0 10px;
-        border: none;
+
+      #door-horizontal-positions .form-item input {
+        width: 100%;
+        max-width: 150px;
+        padding: 8px;
+        border: 1px solid #777;
         border-radius: 4px;
-        cursor: pointer;
-        font-weight: bold;
-      }
-      
-      .action-button:hover {
-        background-color: #45a049;
-      }
-      
-      .status-message {
-        margin: 10px 0;
-        padding: 10px;
-        text-align: center;
-        color: #4CAF50;
-        font-weight: bold;
+        background-color: #555;
+        color: #fff;
+        margin: 0 auto;
+        display: block;
       }
     </style>
   </head>
@@ -200,6 +199,18 @@
       <button onclick="showTab('interiorDoorTab')">Beltéri ajtók</button>
       <button onclick="showTab('electricBoxDoorTab')">Villanyóra szekrény ajtó</button>
     </div>
+
+    <script>
+    // Debug: Fabric.js ellenőrzése
+    window.addEventListener('load', function() {
+      console.log("Oldal betöltve, Fabric.js ellenőrzése");
+      if (typeof fabric !== 'undefined') {
+        console.log("Fabric.js sikeresen betöltve");
+      } else {
+        console.error("HIBA: Fabric.js nem töltődött be!");
+      }
+    });
+    </script>
   
     <!-- Ablakok fül -->
     <div id="windowTab" class="tab active">
@@ -320,8 +331,12 @@
       
       <div class="form-group">
           <div class="form-item">
-              <input type="checkbox" id="useAluminumThreshold" name="useAluminumThreshold">
-              <label for="useAluminumThreshold">Alumínium küszöb használata</label>
+              <label for="useAluminumThreshold">Alumínium küszöb használata:</label>
+              <input type="checkbox" id="useAluminumThreshold">
+          </div>
+          <div class="form-item" id="aluminumThresholdThicknessContainer" style="display: none;">
+              <label for="aluminumThresholdThickness">Alumínium küszöb vastagsága (mm):</label>
+              <input type="number" id="aluminumThresholdThickness" step="0.1" min="0" value="0">
           </div>
       </div>
     
@@ -394,7 +409,7 @@
         </div>
         <div class="form-item">
           <label for="door_horizontal_divisions">Vízszintes osztások száma:</label>
-          <input type="number" id="door_horizontal_divisions" min="0" value="0">
+          <input type="number" id="door_horizontal_divisions" min="1" value="1">
         </div>
       </div>
   
@@ -422,13 +437,13 @@
         </div>
         <div class="form-item">
           <label for="door_vertical_divisions">Függőleges osztások száma:</label>
-          <input type="number" id="door_vertical_divisions" min="0" value="0">
+          <input type="number" id="door_vertical_divisions" min="1" value="1">
         </div>
       </div>
   
       <div class="form-group">
         <div class="form-item">
-          <label for="door-manual-settings-checkbox">Manuális beállítások:</label>
+          <label for="door-manual-settings-checkbox">Manuális beállítások: <span style="font-weight: normal; font-size: 0.9em; color: #ffa500;">(Először állítsd be a vízszintes osztások darabszámát fentebb!)</span></label>
           <input type="checkbox" id="door-manual-settings-checkbox">
         </div>
       </div>
@@ -530,7 +545,7 @@
       </div>
       <div class="form-item">
         <label for="interior_horizontal_divisions">Vízszintes osztások száma:</label>
-        <input type="number" id="interior_horizontal_divisions" min="0" value="0">
+        <input type="number" id="interior_horizontal_divisions" min="1" value="1">
       </div>
     </div>
   
@@ -558,7 +573,7 @@
       </div>
       <div class="form-item">
         <label for="interior_vertical_divisions">Függőleges osztások száma:</label>
-        <input type="number" id="interior_vertical_divisions" min="0" value="0">
+        <input type="number" id="interior_vertical_divisions" min="1" value="1">
       </div>
     </div>
   
@@ -652,7 +667,7 @@
       </div>
       <div class="form-item">
         <label for="electric_box_horizontal_divisions">Vízszintes osztások száma:</label>
-        <input type="number" id="electric_box_horizontal_divisions" min="0" value="0">
+        <input type="number" id="electric_box_horizontal_divisions" min="1" value="1">
       </div>
     </div>
   
@@ -680,7 +695,7 @@
       </div>
       <div class="form-item">
         <label for="electric_box_vertical_divisions">Függőleges osztások száma:</label>
-        <input type="number" id="electric_box_vertical_divisions" min="0" value="0">
+        <input type="number" id="electric_box_vertical_divisions" min="1" value="1">
       </div>
     </div>
   
@@ -696,12 +711,14 @@
     <!-- Generált elemlista -->
     <div class="component-list" id="componentList">
       <h2>Generált Elemlista</h2>
-  </div>
-  
-  <div class="list-actions">
-      <button onclick="saveList()" class="action-button">Lista mentése</button>
-      <button onclick="printList()" class="action-button">Lista nyomtatása</button>
-  </div>
+      <div id="componentListContent"></div>
+      
+      <!-- Lista műveletek -->
+      <div class="list-actions">
+        <button class="action-button" onclick="saveList()">Lista mentése</button>
+        <button class="action-button" onclick="printList()">Lista nyomtatása</button>
+      </div>
+    </div>
   
     <!-- Alkatrészek létrehozása gomb -->
     <div class="form-button">
@@ -709,7 +726,6 @@
     </div>
 
   <script>
-    let hasUnsavedChanges = false;  // Globális változó a nem mentett változások követésére
     // 1. Canvas változók deklarálása
     var canvas = new fabric.Canvas('doorPreviewCanvas');
     var interiorCanvas = new fabric.Canvas('interiorDoorPreviewCanvas');
@@ -751,7 +767,126 @@
             });
         });
     };
+    
     document.addEventListener('DOMContentLoaded', function() {
+      // Automatikus frissítés beállítása
+      function setupAutomaticRefresh() {
+        // Paraméterek, amelyek változása esetén frissítjük az ajtó rajzát
+        var doorParams = [
+            'door_frame_width', 'door_frame_height', 'door_frieze_width',
+            'door_tenon_length', 'door_lower_tenoned_width', 'door_upper_tenoned_width',
+            'door_vertical_divisions', 'door_horizontal_divisions', 'door_middle_division_width',
+            'door_vertical_division_width'
+        ];
+    
+        // Eseménykezelők hozzáadása minden mezőhöz
+        doorParams.forEach(function(paramId) {
+            var element = document.getElementById(paramId);
+            if (element) {
+                element.addEventListener('change', function() {
+                    var params = collectDoorParams();
+                    if (params) {
+                        drawDoor(params);
+                    }
+                });
+                element.addEventListener('input', function() {
+                    var params = collectDoorParams();
+                    if (params) {
+                        drawDoor(params);
+                    }
+                });
+            } else {
+                console.log("Elem nem található: " + paramId);
+            }
+        });
+    }
+    
+    // Manuális beállítások checkbox
+    var manualSettingsCheckbox = document.getElementById('door-manual-settings-checkbox');
+    if (manualSettingsCheckbox) {
+        manualSettingsCheckbox.addEventListener('change', function() {
+            var params = collectDoorParams();
+            if (params) {
+                drawDoor(params);
+            }
+        });
+    }
+    
+    // Manuális távolságok konténere
+    var manualDistancesContainer = document.getElementById('manual-horizontal-distances-container');
+    if (manualDistancesContainer) {
+        manualDistancesContainer.addEventListener('change', function(e) {
+            if (e.target && e.target.classList.contains('distance-input')) {
+                var params = collectDoorParams();
+                if (params) {
+                    drawDoor(params);
+                }
+            }
+        });
+    }
+ 
+    // Automatikus frissítés beállítása
+    setupAutomaticRefresh();
+ 
+     // Kezdeti rajz létrehozása az alapértelmezett paraméterekkel
+     setTimeout(function() {
+          // Kezdeti rajzoláskor ne ellenőrizzük a mezőket, így nem dob hibaüzenetet
+          try {
+              // Eredeti collectDoorParams másolata validáció nélkül
+              var doorFrameWidth = document.getElementById('door_frame_width').value || 800;
+              var doorFrameHeight = document.getElementById('door_frame_height').value || 2000;
+              var doorFrameWoodWidth = document.getElementById('door_frame_wood_width').value || 80;
+              var doorFrameWoodThickness = document.getElementById('door_frame_wood_thickness').value || 68;
+              var doorFriezeWidth = document.getElementById('door_frieze_width').value || 80;
+              var doorFriezeThickness = document.getElementById('door_frieze_thickness').value || 40;
+              var tenonLength = document.getElementById('door_tenon_length').value || 25;
+              var doorType = document.getElementById('door_type').value;  // Itt javítottuk az ID-t
+              var doorSashWidthDeduction = document.getElementById('door_sash_width_deduction').value || 30;
+              var doorSashHeightDeduction = document.getElementById('door_sash_height_deduction').value || 30;
+              var doorCount = document.getElementById('door_count').value || 1;
+              var horizontalDivisions = document.getElementById('door_horizontal_divisions').value || 1;
+              var verticalDivisions = document.getElementById('door_vertical_divisions').value || 1;
+              
+              // Minimális paraméterek az első rajzoláshoz
+              var defaultParams = {
+                  element_type: "Ajtó",
+                  door_frame_width: doorFrameWidth,
+                  door_frame_height: doorFrameHeight,
+                  door_frame_wood_width: doorFrameWoodWidth,
+                  door_frame_wood_thickness: doorFrameWoodThickness,
+                  door_frieze_width: doorFriezeWidth,
+                  door_frieze_thickness: doorFriezeThickness,
+                  tenon_length: tenonLength,
+                  door_type: doorType,
+                  door_sash_width_deduction: doorSashWidthDeduction,
+                  door_sash_height_deduction: doorSashHeightDeduction,
+                  door_count: doorCount,
+                  horizontal_divisions: parseInt(horizontalDivisions),
+                  vertical_divisions: parseInt(verticalDivisions),
+                  lower_tenoned_width: document.getElementById('door_lower_tenoned_width').value || 80,
+                  lower_tenoned_thickness: document.getElementById('door_lower_tenoned_thickness').value || 40,
+                  middle_division_width: document.getElementById('door_middle_division_width').value || 80,
+                  middle_division_thickness: document.getElementById('door_middle_division_thickness').value || 40,
+                  upper_tenoned_width: document.getElementById('door_upper_tenoned_width').value || 80,
+                  upper_tenoned_thickness: document.getElementById('door_upper_tenoned_thickness').value || 40,
+                  vertical_division_width: document.getElementById('door_vertical_division_width').value || 80,
+                  vertical_division_thickness: document.getElementById('door_vertical_division_thickness').value || 40
+              };
+              
+              console.log("Kezdeti betöltés paraméterek:", defaultParams);
+              
+              // Használjuk az alapértelmezett paramétereket
+              if (defaultParams) {
+                  drawDoor(defaultParams);
+              }
+              
+              // Beltéri ajtó és villanyóra ajtó előnézetek hasonló módon...
+              
+          } catch (e) {
+              console.log("Hiba történt a kezdeti rajzolás során:", e);
+              // Nem dobunk hibaüzenetet felugró ablakban
+          }
+      }, 500);
     // Meglévő elemek kiválasztása
     const doorTypeSelect = document.getElementById('door_type');
     const asymmetricOptions = document.getElementById('asymmetricOptions');
@@ -759,6 +894,9 @@
     const asymmetricInputs = document.getElementById('asymmetricInputs');
     const mainWingRatio = document.getElementById('mainWingRatio');
     const disableNarrowWingVerticalDivisions = document.getElementById('disableNarrowWingVerticalDivisions');
+    const useAluminumThresholdCheckbox = document.getElementById('useAluminumThreshold');
+    const aluminumThresholdThicknessContainer = document.getElementById('aluminumThresholdThicknessContainer');
+
 
     // Ajtó típus változás eseménykezelő
     doorTypeSelect?.addEventListener('change', function() {
@@ -767,6 +905,12 @@
         if (!isDouble) {
             asymmetricCheckbox.checked = false;
             asymmetricInputs.style.display = 'none';
+        }
+        
+        // Frissítjük a rajzot az ajtó típus változásakor
+        var params = collectDoorParams();
+        if (params) {
+            drawDoor(params);
         }
         
         // Callback az ajtó típus változásra
@@ -791,7 +935,13 @@
             }));
         }
     });
-
+    
+    // Frissítjük a rajzot az aszimmetrikus beállítás változásakor is
+    var params = collectDoorParams();
+    if (params) {
+        drawDoor(params);
+    }
+    
     // Függőleges osztó kapcsoló eseménykezelő
     disableNarrowWingVerticalDivisions?.addEventListener('change', function() {
         if (window.sketchup) {
@@ -801,6 +951,11 @@
                 disableNarrowWingVerticalDivisions: this.checked
             }));
         }
+    });
+
+    // Alumínium küszöb checkbox eseménykezelő
+    useAluminumThresholdCheckbox?.addEventListener('change', function() {
+        aluminumThresholdThicknessContainer.style.display = this.checked ? 'block' : 'none';
     });
 
     // Itt folytatódnak a meglévő eseménykezelők...
@@ -906,9 +1061,10 @@ function collectDoorParams() {
         console.log("Checkbox állapota:", document.getElementById('useAluminumThreshold').checked);
         
     var useAluminumThreshold = document.getElementById("useAluminumThreshold").checked;
-    var disableNarrowWingVerticalDivisions = document.getElementById('disableNarrowWingVerticalDivisions');
+    var aluminumThresholdThickness = useAluminumThreshold ? parseFloat(document.getElementById("aluminumThresholdThickness").value) || 0 : 0;
+    var disableNarrowWingVerticalDivisions = document.getElementById('disableNarrowWingVerticalDivisions') ? document.getElementById('disableNarrowWingVerticalDivisions').checked : false;
 
-    
+    console.log("disableNarrowWingVerticalDivisions értéke:", disableNarrowWingVerticalDivisions);
 
     // Aszimmetrikus opciók beolvasása
     var isAsymmetric = document.getElementById('isAsymmetric').checked;
@@ -957,23 +1113,24 @@ function collectDoorParams() {
         lower_tenoned_thickness: lowerTenonedThickness,
         middle_division_width: middleDivisionWidth,
         middle_division_thickness: middleDivisionThickness,
-        horizontal_divisions: horizontalDivisions,
+        horizontal_divisions: parseInt(horizontalDivisions),
         upper_tenoned_width: upperTenonedWidth,
         upper_tenoned_thickness: upperTenonedThickness,
         vertical_division_width: verticalDivisionWidth,
         vertical_division_thickness: verticalDivisionThickness,
-        vertical_divisions: verticalDivisions,
+        vertical_divisions: parseInt(verticalDivisions),
         manualHorizontalPositions: manualHorizontalPositions,
         manualVerticalPositions: manualVerticalPositions,
         is_asymmetric: isAsymmetric,          // Új sor
         main_wing_ratio: mainWingRatio,       // Új sor
         useAluminumThreshold: document.getElementById('useAluminumThreshold').checked,
-        disable_narrow_wing_vertical_divisions: disableNarrowWingVerticalDivisions  // Javítva
-        
+        aluminumThresholdThickness: document.getElementById('useAluminumThreshold').checked ? parseFloat(document.getElementById('aluminumThresholdThickness').value) || 0 : 0,
+        disable_narrow_wing_vertical_divisions: disableNarrowWingVerticalDivisions
     };
 }
 
 function drawDoor(params) {
+    console.log("drawDoor függvény meghívva a következő paraméterekkel:", params);
     canvas.clear();
     var scale = Math.min(600 / params.door_frame_width, 1000 / params.door_frame_height);
     var width = params.door_frame_width * scale;
@@ -981,62 +1138,217 @@ function drawDoor(params) {
     var friezeWidth = (params.door_frieze_width || 0) * scale;
     var tenonLength = (params.tenon_length || 0) * scale;
 
-    // Ajtókeret
+    // Debug infó
+    console.log("Canvas méretei:", width, "x", height);
+    console.log("Fríz szélesség:", friezeWidth);
+    console.log("Csap hossz:", tenonLength);
+
+    // Háttér - világos a jobb kontrasztért sötét háttéren
     canvas.add(new fabric.Rect({
         left: 0,
         top: 0,
         width: width,
         height: height,
-        fill: 'transparent',
-        stroke: '#333',
+        fill: '#3f3f3f',
+        stroke: '#888888',
         strokeWidth: 2
     }));
 
-    // Csapos elemek
+    // Csapos elemek méretei
     var lowerTenonedWidth = (params.lower_tenoned_width || 0) * scale;
     var upperTenonedWidth = (params.upper_tenoned_width || 0) * scale;
     var csaposWidth = width - (2 * friezeWidth) + (2 * tenonLength);
 
-    // Alsó és felső csapos
+    // Kitöltés az üvegtábla számára - kicsit sötétebb
+    canvas.add(new fabric.Rect({
+        left: friezeWidth,
+        top: upperTenonedWidth,
+        width: width - (2 * friezeWidth),
+        height: height - upperTenonedWidth - lowerTenonedWidth,
+        fill: '#202530',
+        stroke: '#777777',
+        strokeWidth: 1
+    }));
+
+    // Alsó csapos - világos színű a jó láthatóságért
     canvas.add(new fabric.Rect({
         left: friezeWidth - tenonLength,
         top: height - lowerTenonedWidth,
         width: csaposWidth,
         height: lowerTenonedWidth,
-        fill: '#555',
-        stroke: '#333',
+        fill: '#b0b0b0',
+        stroke: '#ffffff',
         strokeWidth: 1
     }));
 
+    // Felső csapos - világos színű a jó láthatóságért
     canvas.add(new fabric.Rect({
         left: friezeWidth - tenonLength,
         top: 0,
         width: csaposWidth,
         height: upperTenonedWidth,
-        fill: '#555',
-        stroke: '#333',
+        fill: '#b0b0b0',
+        stroke: '#ffffff',
         strokeWidth: 1
     }));
 
-    // Vízszintes osztók
+    // Csapok jelölése - világos vonalak
+    // Felső csapok
+    canvas.add(new fabric.Line([friezeWidth, 0, friezeWidth, upperTenonedWidth], {
+        stroke: '#dddddd',
+        strokeWidth: 0.5,
+        strokeDashArray: [2, 2]
+    }));
+    
+    canvas.add(new fabric.Line([width - friezeWidth, 0, width - friezeWidth, upperTenonedWidth], {
+        stroke: '#dddddd',
+        strokeWidth: 0.5,
+        strokeDashArray: [2, 2]
+    }));
+    
+    // Alsó csapok
+    canvas.add(new fabric.Line([friezeWidth, height - lowerTenonedWidth, friezeWidth, height], {
+        stroke: '#dddddd',
+        strokeWidth: 0.5,
+        strokeDashArray: [2, 2]
+    }));
+    
+    canvas.add(new fabric.Line([width - friezeWidth, height - lowerTenonedWidth, width - friezeWidth, height], {
+        stroke: '#dddddd',
+        strokeWidth: 0.5,
+        strokeDashArray: [2, 2]
+    }));
+
+    // Vízszintes osztók pozícióinak kiszámítása és tárolása
+    var horizontalDivisionPositions = [];
+    var divisionHeight = (params.middle_division_width || 0) * scale;
+    
+    console.log("Vízszintes osztók száma:", params.horizontal_divisions);
+    console.log("Vízszintes osztó magasság:", divisionHeight);
+    
     if (params.horizontal_divisions > 0) {
-        var divisionHeight = (params.middle_division_width || 0) * scale;
         var availableHeight = height - upperTenonedWidth - lowerTenonedWidth;
-        var spacing = availableHeight / (parseInt(params.horizontal_divisions) + 1);
         
-        for (var i = 1; i <= params.horizontal_divisions; i++) {
-            var y = upperTenonedWidth + (spacing * i);
-            canvas.add(new fabric.Line([friezeWidth - tenonLength, y, width - friezeWidth + tenonLength, y], {
-                stroke: '#333',
-                strokeWidth: divisionHeight
-            }));
+        // Ellenőrizzük, hogy vannak-e manuális pozíciók
+        var useManualPositions = document.getElementById('door-manual-settings-checkbox').checked && 
+                                params.manualHorizontalPositions && 
+                                params.manualHorizontalPositions.length === parseInt(params.horizontal_divisions);
+        
+        if (useManualPositions) {
+            // Manuális pozíciók használata - MINDIG az alsó csapostól kezdjük
+            var currentPosition = height - lowerTenonedWidth;
+            
+            // Fordított sorrendben mérjük fel az osztók pozícióit, alulról felfelé haladva
+            for (var i = 0; i < params.manualHorizontalPositions.length; i++) {
+                // A manuális távolságot skálázzuk és felfelé haladunk (az alsó csaposból kiindulva)
+                var manualDistance = params.manualHorizontalPositions[i] * scale;
+                currentPosition -= manualDistance;
+                
+                // Tároljuk az osztó közepének pozícióját
+                horizontalDivisionPositions.push(currentPosition);
+                
+                // Vízszintes osztó - világos
+                canvas.add(new fabric.Rect({
+                    left: friezeWidth - tenonLength,
+                    top: currentPosition - divisionHeight/2,
+                    width: csaposWidth,
+                    height: divisionHeight,
+                    fill: '#b0b0b0',
+                    stroke: '#ffffff',
+                    strokeWidth: 1
+                }));
+                
+                // Csapok jelölése az osztón - világos vonalak
+                canvas.add(new fabric.Line([friezeWidth, currentPosition - divisionHeight/2, friezeWidth, currentPosition + divisionHeight/2], {
+                    stroke: '#dddddd',
+                    strokeWidth: 0.5,
+                    strokeDashArray: [2, 2]
+                }));
+                
+                canvas.add(new fabric.Line([width - friezeWidth, currentPosition - divisionHeight/2, width - friezeWidth, currentPosition + divisionHeight/2], {
+                    stroke: '#dddddd',
+                    strokeWidth: 0.5,
+                    strokeDashArray: [2, 2]
+                }));
+                
+                // Hozzáadjuk az osztó szélességét a következő pozícióhoz (felfelé haladva)
+                currentPosition -= divisionHeight;
+            }
+        } else {
+            // Egyenletes eloszlás használata
+            var spacing = availableHeight / (parseInt(params.horizontal_divisions) + 1);
+            
+            for (var i = 1; i <= params.horizontal_divisions; i++) {
+                var y = upperTenonedWidth + (spacing * i);
+                
+                // Tároljuk az osztó közepének pozícióját
+                horizontalDivisionPositions.push(y);
+                
+                // Vízszintes osztó - világos
+                canvas.add(new fabric.Rect({
+                    left: friezeWidth - tenonLength,
+                    top: y - divisionHeight/2,
+                    width: csaposWidth,
+                    height: divisionHeight,
+                    fill: '#b0b0b0',
+                    stroke: '#ffffff',
+                    strokeWidth: 1
+                }));
+                
+                // Csapok jelölése az osztón - világos vonalak
+                canvas.add(new fabric.Line([friezeWidth, y - divisionHeight/2, friezeWidth, y + divisionHeight/2], {
+                    stroke: '#dddddd',
+                    strokeWidth: 0.5,
+                    strokeDashArray: [2, 2]
+                }));
+                
+                canvas.add(new fabric.Line([width - friezeWidth, y - divisionHeight/2, width - friezeWidth, y + divisionHeight/2], {
+                    stroke: '#dddddd',
+                    strokeWidth: 0.5,
+                    strokeDashArray: [2, 2]
+                }));
+            }
         }
     }
 
-    // Függőleges osztók és frízek
-    var verticalDivisions = parseInt(params.vertical_divisions) || 0;
+    // Horizontális osztók pozícióinak rendezése fentről lefelé (y érték szerint növekvő sorrendben)
+    horizontalDivisionPositions.sort(function(a, b) {
+        return a - b;
+    });
+    
+    // Szegmensek határainak meghatározása (osztókkal együtt)
+    var segments = [];
+    
+    // Első szegmens: felső csapostól az első vízszintes osztóig
+    segments.push({
+        top: upperTenonedWidth,
+        bottom: horizontalDivisionPositions.length > 0 ? horizontalDivisionPositions[0] - divisionHeight/2 : height - lowerTenonedWidth
+    });
+    
+    // Középső szegmensek: vízszintes osztók között
+    for (var i = 0; i < horizontalDivisionPositions.length - 1; i++) {
+        segments.push({
+            top: horizontalDivisionPositions[i] + divisionHeight/2,
+            bottom: horizontalDivisionPositions[i+1] - divisionHeight/2
+        });
+    }
+    
+    // Utolsó szegmens: utolsó vízszintes osztótól az alsó csaposig
+    if (horizontalDivisionPositions.length > 0) {
+        segments.push({
+            top: horizontalDivisionPositions[horizontalDivisionPositions.length - 1] + divisionHeight/2,
+            bottom: height - lowerTenonedWidth
+        });
+    }
+
+    // Függőleges osztók
+    var verticalDivisionCount = parseInt(params.vertical_divisions) || 0;
     var verticalDivisionWidth = (params.vertical_division_width || 0) * scale;
 
+    console.log("Függőleges osztók száma:", verticalDivisionCount);
+    console.log("Függőleges osztó szélesség:", verticalDivisionWidth);
+    console.log("Ajtó típus:", params.door_type);
+    
     if (params.door_type === 'Kétszárnyú') {
         var mainWingWidth = params.is_asymmetric ? 
             width * (params.main_wing_ratio / 100) : 
@@ -1047,92 +1359,226 @@ function drawDoor(params) {
             var mainInnerWidth = mainWingWidth - (2 * friezeWidth);
             var secondInnerWidth = (width - mainWingWidth) - (2 * friezeWidth);
             
-            if (verticalDivisions > 0) {
+            if (verticalDivisionCount > 0) {
                 // Szélesebb szárny osztói
-                var mainDivSpacing = mainInnerWidth / (verticalDivisions + 1);
-                for (var i = 1; i <= verticalDivisions; i++) {
+                var mainDivSpacing = mainInnerWidth / (verticalDivisionCount + 1);
+                for (var i = 1; i <= verticalDivisionCount; i++) {
                     var x = friezeWidth + (i * mainDivSpacing);
-                    canvas.add(new fabric.Line([x, upperTenonedWidth, x, height - lowerTenonedWidth], {
-                        stroke: '#333',
-                        strokeWidth: verticalDivisionWidth
-                    }));
+                    
+                    // Rajzoljuk meg a függőleges osztót szegmensenként
+                    for (var j = 0; j < segments.length; j++) {
+                        var segment = segments[j];
+                        canvas.add(new fabric.Rect({
+                            left: x - verticalDivisionWidth/2,
+                            top: segment.top,
+                            width: verticalDivisionWidth,
+                            height: segment.bottom - segment.top,
+                            fill: '#b0b0b0',
+                            stroke: '#ffffff',
+                            strokeWidth: 1
+                        }));
+                    }
                 }
 
                 // Keskenyebb szárny osztói
                 if (!params.disable_narrow_wing_vertical_divisions) {
-                    var secondDivSpacing = secondInnerWidth / (verticalDivisions + 1);
-                    for (var i = 1; i <= verticalDivisions; i++) {
+                    var secondDivSpacing = secondInnerWidth / (verticalDivisionCount + 1);
+                    for (var i = 1; i <= verticalDivisionCount; i++) {
                         var x = mainWingWidth + friezeWidth + (i * secondDivSpacing);
-                        canvas.add(new fabric.Line([x, upperTenonedWidth, x, height - lowerTenonedWidth], {
-                            stroke: '#333',
-                            strokeWidth: verticalDivisionWidth
-                        }));
+                        
+                        // Rajzoljuk meg a függőleges osztót szegmensenként
+                        for (var j = 0; j < segments.length; j++) {
+                            var segment = segments[j];
+                            canvas.add(new fabric.Rect({
+                                left: x - verticalDivisionWidth/2,
+                                top: segment.top,
+                                width: verticalDivisionWidth,
+                                height: segment.bottom - segment.top,
+                                fill: '#b0b0b0',
+                                stroke: '#ffffff',
+                                strokeWidth: 1
+                            }));
+                        }
                     }
                 }
             }
 
-            // Aszimmetrikus frízek
-            canvas.add(new fabric.Rect({left: 0, top: 0, width: friezeWidth, height: height, fill: '#8B4513'}));
-            canvas.add(new fabric.Rect({left: mainWingWidth - friezeWidth, top: 0, width: friezeWidth, height: height, fill: '#8B4513'}));
-            canvas.add(new fabric.Rect({left: mainWingWidth, top: 0, width: friezeWidth, height: height, fill: '#8B4513'}));
-            canvas.add(new fabric.Rect({left: width - friezeWidth, top: 0, width: friezeWidth, height: height, fill: '#8B4513'}));
+            // Aszimmetrikus frízek - fa színű
+            canvas.add(new fabric.Rect({
+                left: 0, 
+                top: 0, 
+                width: friezeWidth, 
+                height: height, 
+                fill: '#a86d3b', 
+                stroke: '#ffffff', 
+                strokeWidth: 1
+            }));
+            canvas.add(new fabric.Rect({
+                left: mainWingWidth - friezeWidth, 
+                top: 0, 
+                width: friezeWidth, 
+                height: height, 
+                fill: '#a86d3b', 
+                stroke: '#ffffff', 
+                strokeWidth: 1
+            }));
+            canvas.add(new fabric.Rect({
+                left: mainWingWidth, 
+                top: 0, 
+                width: friezeWidth, 
+                height: height, 
+                fill: '#a86d3b', 
+                stroke: '#ffffff', 
+                strokeWidth: 1
+            }));
+            canvas.add(new fabric.Rect({
+                left: width - friezeWidth, 
+                top: 0, 
+                width: friezeWidth, 
+                height: height, 
+                fill: '#a86d3b', 
+                stroke: '#ffffff', 
+                strokeWidth: 1
+            }));
         } else {
             // Szimmetrikus kétszárnyú osztók
             var innerHalfWidth = (width/2) - (2 * friezeWidth);
             
-            if (verticalDivisions > 0) {
-                var divSpacing = innerHalfWidth / (verticalDivisions + 1);
+            if (verticalDivisionCount > 0) {
+                var divSpacing = innerHalfWidth / (verticalDivisionCount + 1);
                 // Mindkét szárny osztói
-                for (var i = 1; i <= verticalDivisions; i++) {
+                for (var i = 1; i <= verticalDivisionCount; i++) {
                     // Bal szárny
                     var x1 = friezeWidth + (i * divSpacing);
                     // Jobb szárny
                     var x2 = (width/2) + friezeWidth + (i * divSpacing);
                     
-                    canvas.add(new fabric.Line([x1, upperTenonedWidth, x1, height - lowerTenonedWidth], {
-                        stroke: '#333',
-                        strokeWidth: verticalDivisionWidth
-                    }));
-                    canvas.add(new fabric.Line([x2, upperTenonedWidth, x2, height - lowerTenonedWidth], {
-                        stroke: '#333',
-                        strokeWidth: verticalDivisionWidth
-                    }));
+                    // Rajzoljuk meg a függőleges osztókat szegmensenként - bal szárny
+                    for (var j = 0; j < segments.length; j++) {
+                        var segment = segments[j];
+                        canvas.add(new fabric.Rect({
+                            left: x1 - verticalDivisionWidth/2,
+                            top: segment.top,
+                            width: verticalDivisionWidth,
+                            height: segment.bottom - segment.top,
+                            fill: '#b0b0b0',
+                            stroke: '#ffffff',
+                            strokeWidth: 1
+                        }));
+                    }
+                    
+                    // Rajzoljuk meg a függőleges osztókat szegmensenként - jobb szárny
+                    for (var j = 0; j < segments.length; j++) {
+                        var segment = segments[j];
+                        canvas.add(new fabric.Rect({
+                            left: x2 - verticalDivisionWidth/2,
+                            top: segment.top,
+                            width: verticalDivisionWidth,
+                            height: segment.bottom - segment.top,
+                            fill: '#b0b0b0',
+                            stroke: '#ffffff',
+                            strokeWidth: 1
+                        }));
+                    }
                 }
             }
 
-            // Szimmetrikus frízek
-            canvas.add(new fabric.Rect({left: 0, top: 0, width: friezeWidth, height: height, fill: '#8B4513'}));
-            canvas.add(new fabric.Rect({left: width/2 - friezeWidth, top: 0, width: friezeWidth, height: height, fill: '#8B4513'}));
-            canvas.add(new fabric.Rect({left: width/2, top: 0, width: friezeWidth, height: height, fill: '#8B4513'}));
-            canvas.add(new fabric.Rect({left: width - friezeWidth, top: 0, width: friezeWidth, height: height, fill: '#8B4513'}));
+            // Szimmetrikus frízek - fa színű
+            canvas.add(new fabric.Rect({
+                left: 0, 
+                top: 0, 
+                width: friezeWidth, 
+                height: height, 
+                fill: '#a86d3b', 
+                stroke: '#ffffff', 
+                strokeWidth: 1
+            }));
+            canvas.add(new fabric.Rect({
+                left: width/2 - friezeWidth, 
+                top: 0, 
+                width: friezeWidth, 
+                height: height, 
+                fill: '#a86d3b', 
+                stroke: '#ffffff', 
+                strokeWidth: 1
+            }));
+            canvas.add(new fabric.Rect({
+                left: width/2, 
+                top: 0, 
+                width: friezeWidth, 
+                height: height, 
+                fill: '#a86d3b', 
+                stroke: '#ffffff', 
+                strokeWidth: 1
+            }));
+            canvas.add(new fabric.Rect({
+                left: width - friezeWidth, 
+                top: 0, 
+                width: friezeWidth, 
+                height: height, 
+                fill: '#a86d3b', 
+                stroke: '#ffffff', 
+                strokeWidth: 1
+            }));
         }
 
-        // Középvonal
+        // Középvonal - szaggatott vonal - most fehér
         canvas.add(new fabric.Line([mainWingWidth, 0, mainWingWidth, height], {
-            stroke: '#333',
+            stroke: '#ffffff',
             strokeWidth: 1,
             strokeDashArray: [5, 5]
         }));
     } else {
         // Egyszárnyú ajtó osztói és frízei
         var innerWidth = width - (2 * friezeWidth);
-        if (verticalDivisions > 0) {
-            var divSpacing = innerWidth / (verticalDivisions + 1);
-            for (var i = 1; i <= verticalDivisions; i++) {
+        if (verticalDivisionCount > 0) {
+            var divSpacing = innerWidth / (verticalDivisionCount + 1);
+            console.log("Egyszárnyú ajtó: osztóköz:", divSpacing);
+            
+            for (var i = 1; i <= verticalDivisionCount; i++) {
                 var x = friezeWidth + (i * divSpacing);
-                canvas.add(new fabric.Line([x, upperTenonedWidth, x, height - lowerTenonedWidth], {
-                    stroke: '#333',
-                    strokeWidth: verticalDivisionWidth
-                }));
+                console.log("Függőleges osztó pozíció:", x);
+                
+                // Rajzoljuk meg a függőleges osztót szegmensenként
+                for (var j = 0; j < segments.length; j++) {
+                    var segment = segments[j];
+                    canvas.add(new fabric.Rect({
+                        left: x - verticalDivisionWidth/2,
+                        top: segment.top,
+                        width: verticalDivisionWidth,
+                        height: segment.bottom - segment.top,
+                        fill: '#b0b0b0',
+                        stroke: '#ffffff',
+                        strokeWidth: 1
+                    }));
+                }
             }
         }
         
-        // Egyszárnyú frízek
-        canvas.add(new fabric.Rect({left: 0, top: 0, width: friezeWidth, height: height, fill: '#8B4513'}));
-        canvas.add(new fabric.Rect({left: width - friezeWidth, top: 0, width: friezeWidth, height: height, fill: '#8B4513'}));
+        // Egyszárnyú frízek - fa színű
+        canvas.add(new fabric.Rect({
+            left: 0, 
+            top: 0, 
+            width: friezeWidth, 
+            height: height, 
+            fill: '#a86d3b', 
+            stroke: '#ffffff', 
+            strokeWidth: 1
+        }));
+        canvas.add(new fabric.Rect({
+            left: width - friezeWidth, 
+            top: 0, 
+            width: friezeWidth, 
+            height: height, 
+            fill: '#a86d3b', 
+            stroke: '#ffffff', 
+            strokeWidth: 1
+        }));
     }
 
+    console.log("Canvas renderelése...");
     canvas.renderAll();
+    console.log("Canvas renderelés befejezve.");
 }
 
     // 6. Beltéri ajtó függvények
@@ -1417,12 +1863,12 @@ function drawDoor(params) {
         var lowerTenonedWidth = (params.lower_tenoned_width || 0) * scale;
         if (lowerTenonedWidth > 0) {
             var lowerTenoned = new fabric.Rect({
-                left: 0,
-                top: height - lowerTenonedWidth,
-                width: width,
-                height: lowerTenonedWidth,
-                fill: '#555',
-                stroke: '#333',
+                left: 0, 
+                top: height - lowerTenonedWidth, 
+                width: width, 
+                height: lowerTenonedWidth, 
+                fill: '#555', 
+                stroke: '#333', 
                 strokeWidth: 1
             });
             electricBoxCanvas.add(lowerTenoned);
@@ -1432,12 +1878,12 @@ function drawDoor(params) {
         var upperTenonedWidth = (params.upper_tenoned_width || 0) * scale;
         if (upperTenonedWidth > 0) {
             var upperTenoned = new fabric.Rect({
-                left: 0,
-                top: 0,
-                width: width,
-                height: upperTenonedWidth,
-                fill: '#555',
-                stroke: '#333',
+                left: 0, 
+                top: 0, 
+                width: width, 
+                height: upperTenonedWidth, 
+                fill: '#555', 
+                stroke: '#333', 
                 strokeWidth: 1
             });
             electricBoxCanvas.add(upperTenoned);
@@ -1474,6 +1920,7 @@ function drawDoor(params) {
                 // Címke hozzáadása
                 const title = document.createElement('h4');
                 title.textContent = 'Vízszintes osztók távolságai:';
+                title.style.textAlign = 'center';
                 container.appendChild(title);
                 
                 // Info szöveg
@@ -1481,6 +1928,7 @@ function drawDoor(params) {
                 info.textContent = 'Add meg az osztók közötti távolságokat (mm):';
                 info.style.fontSize = '0.9em';
                 info.style.color = '#888';
+                info.style.textAlign = 'center';
                 container.appendChild(info);
         
                 // Beviteli mezők generálása minden osztóhoz
@@ -1501,49 +1949,69 @@ function drawDoor(params) {
                     input.className = 'horizontal-distance';
                     input.step = '0.1';
                     input.min = '0';
-                    input.onchange = calculateRemainingDistance;
+                    input.value = ""; // Üres alapértelmezett érték
+                    input.addEventListener('input', calculateRemainingDistance); // Eseményfigyelő hozzáadása
                     
                     div.appendChild(label);
                     div.appendChild(input);
                     container.appendChild(div);
                 }
-        
-                // Maradék távolság megjelenítése
-                const remainingDiv = document.createElement('div');
-                remainingDiv.className = 'form-item';
                 
-                const remainingLabel = document.createElement('label');
-                remainingLabel.textContent = 'Utolsó osztó és felső csapos közti távolság:';
+                // Utolsó osztó és felső csapos közti távolság
+                const lastDiv = document.createElement('div');
+                lastDiv.className = 'form-item';
                 
-                const remainingSpan = document.createElement('span');
-                remainingSpan.id = 'remaining-distance';
-                remainingSpan.textContent = 'Add meg a többi távolságot...';
+                const lastLabel = document.createElement('label');
+                lastLabel.textContent = 'Utolsó osztó és felső csapos közti távolság:';
                 
-                remainingDiv.appendChild(remainingLabel);
-                remainingDiv.appendChild(remainingSpan);
-                container.appendChild(remainingDiv);
+                const lastInput = document.createElement('div');
+                lastInput.id = 'last-distance';
+                lastInput.textContent = 'Add meg a többi távolságot...';
+                lastInput.style.padding = '10px';
+                lastInput.style.backgroundColor = '#333';
+                lastInput.style.borderRadius = '4px';
+                lastInput.style.textAlign = 'center';
+                
+                lastDiv.appendChild(lastLabel);
+                lastDiv.appendChild(lastInput);
+                container.appendChild(lastDiv);
+                
+                // Inicializáljuk a maradék távolság számítását
+                calculateRemainingDistance();
             }
         }
         
         // Maradék távolság számítása
         function calculateRemainingDistance() {
+            if (!document.getElementById('door-manual-settings-checkbox').checked) {
+                return;
+            }
+
+            // Begyűjtjük az értékeket
             const doorHeight = parseFloat(document.getElementById('door_frame_height').value) || 0;
+            const doorSashHeightDeduction = parseFloat(document.getElementById('door_sash_height_deduction').value) || 0;
+            const divisionWidth = parseFloat(document.getElementById('door_middle_division_width').value) || 0;
             const lowerTenonWidth = parseFloat(document.getElementById('door_lower_tenoned_width').value) || 0;
             const upperTenonWidth = parseFloat(document.getElementById('door_upper_tenoned_width').value) || 0;
-            const divisionWidth = parseFloat(document.getElementById('door_middle_division_width').value) || 0;
-            const tenonLength = parseFloat(document.getElementById('tenon_length').value) || 0;
+            
             const horizontalDivCount = parseInt(document.getElementById('door_horizontal_divisions').value) || 0;
-        
-            // Belső magasság számítása
-            const innerHeight = doorHeight - (lowerTenonWidth + upperTenonWidth);
+
+            // Belső magasság számítása a nyíló magasság levonással együtt
+            const innerHeight = doorHeight - (lowerTenonWidth + upperTenonWidth + doorSashHeightDeduction);
             
             // Megadott távolságok összegzése
-            let totalUsedDistance = 0;
+            let totalDistances = 0;
             let allDistancesFilled = true;
             
             // Ellenőrizzük az összes beviteli mezőt
             for (let i = 0; i < horizontalDivCount; i++) {
                 const input = document.getElementById(`horizontal-distance-${i}`);
+                if (!input) {
+                    console.error(`Nem található a ${i}. távolság beviteli mező`);
+                    allDistancesFilled = false;
+                    break;
+                }
+                
                 const distance = parseFloat(input.value);
                 
                 if (isNaN(distance)) {
@@ -1551,29 +2019,55 @@ function drawDoor(params) {
                     break;
                 }
                 
-                totalUsedDistance += distance + (2 * tenonLength); // Hozzáadjuk a csaphosszakat
+                totalDistances += distance;
             }
-        
-            // Osztók szélességének hozzáadása
-            totalUsedDistance += divisionWidth * horizontalDivCount;
-        
+            
+            // Felhasznált magasság kiszámítása
+            // Formula: az osztók közti távolságok összege + az osztók szélessége
+            let totalUsedHeight = 0;
+            if (allDistancesFilled) {
+                // Osztók közti távolságok
+                totalUsedHeight += totalDistances;
+                
+                // Osztók szélessége
+                totalUsedHeight += divisionWidth * horizontalDivCount;
+            }
+            
             // Eredmény megjelenítése
-            const remainingSpan = document.getElementById('remaining-distance');
+            const lastDistanceElement = document.getElementById('last-distance');
+            if (!lastDistanceElement) {
+                console.error('Nem található az "utolsó távolság" megjelenítő elem');
+                return;
+            }
             
             if (!allDistancesFilled) {
-                remainingSpan.textContent = 'Add meg az összes távolságot...';
-                remainingSpan.style.color = '#888';
+                lastDistanceElement.textContent = 'Add meg az összes távolságot...';
+                lastDistanceElement.style.color = '#888';
             } else {
-                const remainingDistance = innerHeight - totalUsedDistance;
+                // Az utolsó szegmens hossza a belső magasság mínusz a már felhasznált hossz
+                const lastSegmentLength = innerHeight - totalUsedHeight;
                 
-                if (remainingDistance < 0) {
-                    remainingSpan.textContent = 'HIBA: A megadott távolságok túl nagyok!';
-                    remainingSpan.style.color = 'red';
+                if (lastSegmentLength < 0) {
+                    lastDistanceElement.textContent = 'HIBA: A megadott távolságok túl nagyok!';
+                    lastDistanceElement.style.color = '#ff4444';
                 } else {
-                    remainingSpan.textContent = `${remainingDistance.toFixed(1)} mm`;
-                    remainingSpan.style.color = '#fff';
+                    lastDistanceElement.textContent = lastSegmentLength.toFixed(1) + ' mm';
+                    lastDistanceElement.style.color = '#4CAF50';
                 }
             }
+            
+            // Konzol naplózás hibakereséshez
+            console.log({
+                doorHeight,
+                divisionWidth,
+                lowerTenonWidth,
+                upperTenonWidth,
+                horizontalDivCount,
+                innerHeight,
+                totalUsedHeight,
+                allDistancesFilled,
+                remainingDistance: innerHeight - totalUsedHeight
+            });
         }
         // Az ajtó típus változását kezelő függvény
         function handleDoorTypeChange() {
@@ -1594,7 +2088,7 @@ function drawDoor(params) {
             document.getElementById('asymmetricInputs').style.display = 'none';
         }
     }
-
+    
     // Az aszimmetrikus beállítás változását kezelő függvény
     function handleAsymmetricChange() {
         const isAsymmetric = document.getElementById('isAsymmetric').checked;
@@ -1640,85 +2134,13 @@ function drawDoor(params) {
     }
 
     function updateComponentList(componentList) {
-        const componentListDiv = document.getElementById('componentList');
-        componentListDiv.innerHTML = '<h2>Generált Elemlista</h2>';
-        
-        let currentIndex = -1;
-        
-        if (componentList && componentList.length > 0) {
-            hasUnsavedChanges = true;  // Van új elem a listában
-            
-            componentList.forEach(function(item) {
-                const div = document.createElement('div');
-                div.className = 'component-item';
-                
-                if (item.startsWith('<button')) {
-                    currentIndex++;
-                    const updatedItem = item.replace(/deleteWindow\(\d+\)/, 'deleteWindow(' + currentIndex + ')');
-                    div.innerHTML = updatedItem;
-                } else if (item === '') {
-                    div.style.borderTop = '1px solid #ccc';
-                    div.style.margin = '10px 0';
-                } else {
-                    div.textContent = item;
-                }
-                
-                componentListDiv.appendChild(div);
-            });
-        } else {
-            const emptyDiv = document.createElement('div');
-            emptyDiv.className = 'component-item';
-            emptyDiv.textContent = 'Nincs generált elem.';
-            componentListDiv.appendChild(emptyDiv);
-            hasUnsavedChanges = false;  // Nincs elem a listában
-        }
-    }
-    
-    // Ezt a részt kell módosítani a dialog.html fájlban:
-    
-    function saveList() {
-        const name = prompt("Adja meg a mentés nevét:");
-        if (name) {
-            const componentList = document.getElementById('componentList');
-            const items = componentList.getElementsByClassName('component-item');
-            const components = [];
-            for (let item of items) {
-                components.push(item.textContent.trim());
-            }
-            
-            if (components.length > 0) {
-                sketchup.saveComponentList(name, components);
-                hasUnsavedChanges = false;
-                updateSaveStatus('Lista mentve!');
-            } else {
-                alert('Nincs menthető elem a listában!');
-            }
-        }
-    }
-    
-    function printList() {
-        const componentList = document.getElementById('componentList');
-        const items = componentList.getElementsByClassName('component-item');
-        const components = [];
-        for (let item of items) {
-            components.push(item.textContent.trim());
-        }
-        
-        if (components.length > 0) {
-            sketchup.printComponentList(components);
-        } else {
-            alert('Nincs nyomtatható lista!');
-        }
-    }
-    
-    function updateComponentList(componentList) {
-        var contentDiv = document.getElementById('componentList');
-        contentDiv.innerHTML = '<h2>Generált Elemlista</h2>';
+        var contentDiv = document.getElementById('componentListContent');
+        contentDiv.innerHTML = '';
         var currentIndex = -1;
         componentList.forEach(function(item) {
             if (item.startsWith('<button')) {
                 currentIndex++;
-                var updatedItem = item.replace(/deleteWindow\\\\\\\\\\\\\\\(\\\\\\\\\\\\\\d+\\\\\\\\\\\\\\\)/, 'deleteWindow(' + currentIndex + ')');
+                var updatedItem = item.replace(/deleteWindow\\\\\\\\\\\\\\\\(\\\\\\\\\\\\\\\\d+\\\\\\\\\\\\\\\\)/, 'deleteWindow(' + currentIndex + ')');
                 contentDiv.innerHTML += updatedItem + '<br>';
             } else if (item === '') {
                 contentDiv.innerHTML += '<hr>';
@@ -1727,17 +2149,17 @@ function drawDoor(params) {
             }
         });
     }
-    
+
     function deleteWindow(index) {
         console.log('Törlés kérése indexnél:', index);
         sketchup.deleteWindow(index);
     }
-    
+
     function generateComponents() {
         console.log("Alkatrészek generálása.");
         sketchup.generateWindowParts();
     }
-    
+
     function updateSaveStatus(message) {
         // Ha nem létezik még a saveStatus div, hozzuk létre
         let statusDiv = document.getElementById('saveStatus');
@@ -1754,248 +2176,213 @@ function drawDoor(params) {
             statusDiv.textContent = '';
         }, 3000);
     }
-    
-    
+
     function saveList() {
         const name = prompt("Adja meg a mentés nevét:");
         if (name) {
-            const componentList = document.getElementById('componentList');
+            const componentList = document.getElementById('componentListContent');
             const components = Array.from(componentList.getElementsByTagName('p'))
                 .map(item => item.textContent)
                 .filter(text => text.trim() !== '');
             
             if (components.length > 0) {
                 sketchup.saveComponentList(name, JSON.stringify(components));
-                hasUnsavedChanges = false;
                 updateSaveStatus('Lista mentve!');
             } else {
                 alert('Nincs menthető elem a listában!');
             }
         }
     }
-    
+
     function printList() {
-    const componentList = document.getElementById('componentList');
-    if (!componentList) {
-        alert('Hiba: Nem található a komponenslista!');
-        return;
-    }
-
-    const components = Array.from(componentList.getElementsByTagName('p'));
-    
-    if (components.length > 0) {
-        // Word-kompatibilis HTML dokumentum struktúrával
-        const printableHtml = `
-            <!DOCTYPE html>
-            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-            <head>
-                <meta charset="UTF-8">
-                <title>Alkatrészlista</title>
-                <!--[if gte mso 9]>
-                <xml>
-                    <w:WordDocument>
-                        <w:View>Print</w:View>
-                        <w:Zoom>90</w:Zoom>
-                        <w:DoNotOptimizeForBrowser/>
-                    </w:WordDocument>
-                </xml>
-                <![endif]-->
-                <style>
-                    @page {
-                        margin: 10mm;
-                    }
-                    
-                    body {
-                        font-family: Arial, sans-serif;
-                        margin: 0;
-                        padding: 0;
-                        font-size: 10pt;
-                        line-height: 1.2;
-                        width: 100%;
-                    }
-                    
-                    h1 {
-                        color: #333;
-                        text-align: center;
-                        font-size: 12pt;
-                        margin: 10px 0;
-                    }
-                    
-                    .components {
-                        display: flex;
-                        flex-wrap: wrap;
-                        gap: 20px;
-                        margin: 0 2mm;
-                    }
-                    
-                    .group {
-                        width: calc(50% - 15px);
-                        margin: 0;
-                        padding: 10px;
-                        border: 1px solid #ccc;
-                        border-radius: 5px;
-                        box-sizing: border-box;
-                        page-break-inside: avoid;
-                    }
-                    
-                    .structure-header {
-                        background-color: #f0f0f0;
-                        padding: 5px;
-                        margin: -10px -10px 10px -10px;
-                        font-weight: bold;
-                        border-bottom: 1px solid #ccc;
-                    }
-                    
-                    .structure-info {
-                        color: #666;
-                        margin-bottom: 10px;
-                        padding-bottom: 5px;
-                        border-bottom: 1px dashed #ccc;
-                    }
-                    
-                    .component {
-                        margin: 5px 0;
-                        padding: 0;
-                    }
-                    
-                    @media print {
-                        body { margin: 0; }
-                        .no-print { display: none; }
-                        .components { gap: 10px; }
-                    }
-
-                    /* Word specifikus stílusok */
-                    table {
-                        width: 100%;
-                        border-collapse: collapse;
-                        margin-bottom: 10pt;
-                    }
-                    
-                    td, th {
-                        border: 1pt solid #ccc;
-                        padding: 4pt;
-                        text-align: left;
-                    }
-                    
-                    th {
-                        background-color: #f0f0f0;
-                    }
-                </style>
-            </head>
-            <body>
-                <h1>Alkatrészlista</h1>
-                <div class="components">
-                    ${formatComponentsToGroups(components)}
-                </div>
-            </body>
-            </html>
-        `;
-        
-        sketchup.printComponentList(printableHtml);
-    } else {
-        alert('Nincs nyomtatható elem a listában!');
-    }
-}
-
-function formatComponentsToGroups(components) {
-    let groups = [];
-    let currentGroup = null;
-    let currentComponents = [];
-    
-    components.forEach(comp => {
-        const text = comp.textContent.trim();
-        
-        if (text.includes('Ablak') || text.includes('Ajtó')) {
-            if (currentGroup) {
-                groups.push({
-                    header: currentGroup,
-                    components: [...currentComponents]
-                });
-            }
-            currentGroup = text;
-            currentComponents = [];
-        } else if (text.startsWith('Méret:') || text.startsWith('Típus:')) {
-            if (currentComponents.length === 0) {
-                currentComponents.push({type: 'info', content: text});
-            } else if (currentComponents[0].type === 'info') {
-                currentComponents[0].content += '<br>' + text;
-            }
-        } else if (text) {
-            currentComponents.push({type: 'component', content: text});
+        const componentList = document.getElementById('componentListContent');
+        if (!componentList) {
+            alert('Hiba: Nem található a komponenslista!');
+            return;
         }
-    });
-    
-    if (currentGroup) {
-        groups.push({
-            header: currentGroup,
-            components: [...currentComponents]
-        });
-    }
-    
-    return groups.map(group => `
-        <div class="group">
-            <div class="structure-header">${group.header}</div>
-            ${group.components.map(comp => 
-                comp.type === 'info' 
-                    ? `<div class="structure-info">${comp.content}</div>`
-                    : `<div class="component">${comp.content}</div>`
-            ).join('')}
-        </div>
-    `).join('');
-}
-    
-    
-    function saveList() {
-        const name = prompt("Adja meg a mentés nevét:");
-        if (name) {
-            const componentList = document.getElementById('componentList');
-            const components = Array.from(componentList.getElementsByTagName('p'));
+
+        const components = Array.from(componentList.getElementsByTagName('p'));
+        
+        if (components.length > 0) {
+            // Word-kompatibilis HTML dokumentum struktúrával
+            const printableHtml = `
+                <!DOCTYPE html>
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Alkatrészlista</title>
+                    <!--[if gte mso 9]>
+                    <xml>
+                        <w:WordDocument>
+                            <w:View>Print</w:View>
+                            <w:Zoom>90</w:Zoom>
+                            <w:DoNotOptimizeForBrowser/>
+                        </w:WordDocument>
+                    </xml>
+                    <![endif]-->
+                    <style>
+                        @page {
+                            margin: 10mm;
+                        }
+                        
+                        body {
+                            font-family: Arial, sans-serif;
+                            margin: 0;
+                            padding: 0;
+                            font-size: 10pt;
+                            line-height: 1.2;
+                            width: 100%;
+                        }
+                        
+                        h1 {
+                            color: #333;
+                            text-align: center;
+                            font-size: 12pt;
+                            margin: 10px 0;
+                        }
+                        
+                        .components {
+                            display: flex;
+                            flex-wrap: wrap;
+                            gap: 20px;
+                            margin: 0 2mm;
+                        }
+                        
+                        .group {
+                            width: calc(50% - 15px);
+                            margin: 0;
+                            padding: 10px;
+                            border: 1px solid #ccc;
+                            border-radius: 5px;
+                            box-sizing: border-box;
+                            page-break-inside: avoid;
+                        }
+                        
+                        .structure-header {
+                            background-color: #f0f0f0;
+                            padding: 5px;
+                            margin: -10px -10px 10px -10px;
+                            font-weight: bold;
+                            border-bottom: 1px solid #ccc;
+                        }
+                        
+                        .structure-info {
+                            color: #666;
+                            margin-bottom: 10px;
+                            padding-bottom: 5px;
+                            border-bottom: 1px dashed #ccc;
+                        }
+                        
+                        .component {
+                            margin: 5px 0;
+                            padding: 0;
+                        }
+                        
+                        .print-button {
+                            display: block;
+                            margin: 20px auto;
+                            padding: 10px 20px;
+                            background-color: #4CAF50;
+                            color: white;
+                            border: none;
+                            border-radius: 4px;
+                            cursor: pointer;
+                            font-size: 14px;
+                        }
+                        
+                        .print-button:hover {
+                            background-color: #45a049;
+                        }
+                        
+                        @media print {
+                            body { margin: 0; }
+                            .no-print { display: none; }
+                            .components { gap: 10px; }
+                            .print-button { display: none; }
+                        }
+
+                        /* Word specifikus stílusok */
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-bottom: 10pt;
+                        }
+                        
+                        td, th {
+                            border: 1pt solid #ccc;
+                            padding: 4pt;
+                            text-align: left;
+                        }
+                        
+                        th {
+                            background-color: #f0f0f0;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h1>Alkatrészlista</h1>
+                    <button onclick="window.print()" class="print-button">Nyomtatás</button>
+                    <div class="components">
+                        ${formatComponentsToGroups(components)}
+                    </div>
+                    <button onclick="window.print()" class="print-button">Nyomtatás</button>
+                </body>
+                </html>
+            `;
             
-            if (components.length > 0) {
-                // HTML formátum létrehozása
-                const htmlContent = `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <meta charset="UTF-8">
-                        <title>Alkatrészlista - ${name}</title>
-                        <style>
-                            body { font-family: Arial, sans-serif; margin: 20px; }
-                            h1 { color: #333; }
-                            .component { margin: 10px 0; padding: 5px; border-bottom: 1px solid #eee; }
-                        </style>
-                    </head>
-                    <body>
-                        <h1>Alkatrészlista - ${name}</h1>
-                        <div class="components">
-                            ${components.map(item => `<div class="component">${item.textContent}</div>`).join('')}
-                        </div>
-                    </body>
-                    </html>
-                `;
-                
-                sketchup.saveComponentList(name, htmlContent);
-                hasUnsavedChanges = false;
-                updateSaveStatus('Lista mentve!');
-            } else {
-                alert('Nincs menthető elem a listában!');
-            }
+            sketchup.printComponentList(printableHtml);
+        } else {
+            alert('Nincs nyomtatható elem a listában!');
         }
     }
-    // Bezárás előtti ellenőrzés
-    window.addEventListener('beforeunload', function(e) {
-        if (hasUnsavedChanges) {
-            // Értesítjük a Ruby kódot a nem mentett változásokról
-            if (typeof sketchup !== 'undefined') {
-                sketchup.checkUnsavedChanges();
-                // Megakadályozzuk az azonnali bezárást
-                e.preventDefault();
-                e.returnValue = '';
+
+    function formatComponentsToGroups(components) {
+        let groups = [];
+        let currentGroup = null;
+        let currentComponents = [];
+        
+        components.forEach(comp => {
+            const text = comp.textContent.trim();
+            
+            if (text.includes('Ablak') || text.includes('Ajtó')) {
+                if (currentGroup) {
+                    groups.push({
+                        header: currentGroup,
+                        components: [...currentComponents]
+                    });
+                }
+                currentGroup = text;
+                currentComponents = [];
+            } else if (text.startsWith('Méret:') || text.startsWith('Típus:')) {
+                if (currentComponents.length === 0) {
+                    currentComponents.push({type: 'info', content: text});
+                } else if (currentComponents[0].type === 'info') {
+                    currentComponents[0].content += '<br>' + text;
+                }
+            } else if (text) {
+                currentComponents.push({type: 'component', content: text});
             }
+        });
+        
+        if (currentGroup) {
+            groups.push({
+                header: currentGroup,
+                components: [...currentComponents]
+            });
         }
-    });
+        
+        return groups.map(group => `
+            <div class="group">
+                <div class="structure-header">${group.header}</div>
+                ${group.components.map(comp => 
+                    comp.type === 'info' 
+                        ? `<div class="structure-info">${comp.content}</div>`
+                        : `<div class="component">${comp.content}</div>`
+                ).join('')}
+            </div>
+        `).join('');
+    }
   </script>
    
- </script>
-</body>
+ </body>
 </html>
